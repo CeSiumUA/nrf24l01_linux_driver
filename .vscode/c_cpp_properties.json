@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                ".",
+                "/usr/include/",
+                "/lib/modules/6.8.0-31-generic/build/include/"
+            ],
+            "defines": ["__KERNEL__"],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "none"
+        }
+    ],
+    "version": 4
+}

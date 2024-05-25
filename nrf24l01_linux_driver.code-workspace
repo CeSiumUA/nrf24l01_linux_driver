@@ -4,5 +4,10 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"cdev.h": "c",
+			"module.h": "c"
+		}
+	}
 }
