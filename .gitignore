@@ -7,3 +7,4 @@
 linux_source_cdt
 *.mod
 build
+*.o

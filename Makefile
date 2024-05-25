@@ -13,7 +13,8 @@ EXTRA_CFLAGS += $(DEBFLAGS)
 
 ifneq ($(KERNELRELEASE),)
 # call from kernel build system
-aesdchar-y := main.o
+obj-m	:= aesdchar.o
+aesdchar-y := src/main.o
 else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
