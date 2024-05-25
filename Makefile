@@ -16,7 +16,7 @@ ifneq ($(KERNELRELEASE),)
 aesdchar-y := main.o
 else
 
-KERNELDIR ?= /lib/modules/5.15.146.1+/build
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)
 
 modules:
