@@ -14,5 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Clean
+      run: make clean
+
     - name: Build device tree
       run: make dts
