@@ -43,7 +43,7 @@ static int __init nrf24_init(void)
     ret = alloc_chrdev_region(&nrf24_dev, 0, NRF24_MINORS, nrf24_spi_driver.driver.name);
     if (ret < 0) {
         pr_err("nrf24: failed to allocate chrdev region\n");
-        return ret;
+        goto err_destroy_ida;
     }
 
     nrf24_class = class_create(nrf24_spi_driver.driver.name);
@@ -65,7 +65,7 @@ err_destroy_class:
     class_destroy(nrf24_class);
 err_unregister_chrdev:
     unregister_chrdev(MAJOR(nrf24_dev), nrf24_spi_driver.driver.name);
-err_ida_destroy:
+err_destroy_ida:
     ida_destroy(&nrf24_ida_pipe);
     ida_destroy(&nrf24_ida_dev);
 
