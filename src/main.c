@@ -21,7 +21,7 @@ MODULE_DEVICE_TABLE(of, nrf24_dt_ids);
 static int nrf24_probe(struct spi_device *spi);
 static void nrf24_remove(struct spi_device *spi);
 
-static struct spi_driver nrf24_driver = {
+static struct spi_driver nrf24_spi_driver = {
     .driver = {
         .name = "nrf24",
         .owner = THIS_MODULE,
@@ -40,7 +40,7 @@ static int __init nrf24_init(void)
 {
     int ret;
 
-    ret = alloc_chrdev_region(&nrf24_dev, 0, NRF24_MINORS, nrf24_driver.driver.name);
+    ret = alloc_chrdev_region(&nrf24_dev, 0, NRF24_MINORS, nrf24_spi_driver.driver.name);
     if (ret < 0) {
         pr_err("nrf24: failed to allocate chrdev region\n");
         return ret;
@@ -53,7 +53,7 @@ static int __init nrf24_init(void)
         goto err_unregister_chrdev;
     }
 
-    ret = spi_register_driver(&nrf24_driver);
+    ret = spi_register_driver(&nrf24_spi_driver);
     if (ret < 0) {
         pr_err("nrf24: failed to register spi driver\n");
         goto err_destroy_class;
@@ -64,7 +64,7 @@ static int __init nrf24_init(void)
 err_destroy_class:
     class_destroy(nrf24_class);
 err_unregister_chrdev:
-    unregister_chrdev(MAJOR(nrf24_dev), nrf24_driver.driver.name);
+    unregister_chrdev(MAJOR(nrf24_dev), nrf24_spi_driver.driver.name);
 err_ida_destroy:
     ida_destroy(&nrf24_ida_pipe);
     ida_destroy(&nrf24_ida_dev);
@@ -74,9 +74,9 @@ err_ida_destroy:
 
 static void __exit nrf24_exit(void)
 {
-    spi_unregister_driver(&nrf24_driver);
+    spi_unregister_driver(&nrf24_spi_driver);
     class_destroy(nrf24_class);
-    unregister_chrdev(MAJOR(nrf24_dev), nrf24_driver.driver.name);
+    unregister_chrdev(MAJOR(nrf24_dev), nrf24_spi_driver.driver.name);
     ida_destroy(&nrf24_ida_pipe);
     ida_destroy(&nrf24_ida_dev);
 }
