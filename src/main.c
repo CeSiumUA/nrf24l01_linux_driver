@@ -36,6 +36,16 @@ static DEFINE_IDA(nrf24_ida_pipe);
 static DEFINE_IDA(nrf24_ida_dev);
 static struct class *nrf24_class;
 
+static int nrf24_probe(struct spi_device *spi){
+    int ret;
+
+    return 0;
+}
+
+static void nrf24_remove(struct spi_device *spi){
+
+}
+
 static int __init nrf24_init(void)
 {
     int ret;
