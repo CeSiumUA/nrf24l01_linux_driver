@@ -1,6 +1,7 @@
 #ifndef __NRF24_HAL_H__
 #define __NRF24_HAL_H__
 
+#ifdef __KERNEL__
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -20,8 +21,6 @@
 #include <linux/poll.h>
 #include <linux/list.h>
 #include <linux/timer.h>
-
-#ifdef __KERNEL__
 #else
 #include <stdint.h>
 #include <string.h>
@@ -35,7 +34,7 @@ typedef enum nrf24_hal_status_t {
     HAL_OK = 0,
     HAL_ERROR,
 } nrf24_hal_status_t;
-typedef struct gpio_desc nrf24_gpio_pin_t;
+typedef struct gpio_desc * nrf24_gpio_pin_t;
 
 #define NRF24_HAL_SET_PIN_HIGH(gpio_pin)                    gpiod_set_value((gpio_pin), 1);
 #define NRF24_HAL_SET_PIN_LOW(gpio_pin)                     gpiod_set_value((gpio_pin), 0);
