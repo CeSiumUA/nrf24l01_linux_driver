@@ -150,6 +150,8 @@ typedef struct nrf24_gpio_pin_t {
 
 #define NRF24_BASE_FREQUENCY                     (2400)
 
+#define NRF24_MAX_PAYLOAD_SIZE                   (32)
+
 struct nrf24_t {
     nrf24_spi_t *spi;
     nrf24_gpio_pin_t csn;
