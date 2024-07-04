@@ -37,7 +37,7 @@ struct nrf24_device_config_t {
 struct nrf24_pipe_config_t {
     u64 addr;
     ssize_t plw;
-}
+};
 
 struct nrf24_pipe_t {
     int id;
@@ -59,7 +59,7 @@ struct nrf24_tx_data_t {
     struct nrf24_pipe *pipe;
     u8 size;
     u8 payload[NRF24_MAX_PAYLOAD_SIZE];
-}
+};
 
 struct nrf24_device_t {
     u32 id;
@@ -84,7 +84,7 @@ struct nrf24_device_t {
 
     struct timer_list rx_active_timer;
     bool rx_active;
-}
+};
 
 #define to_nrf24_device(device)	                        container_of(device, struct nrf24_device, dev)
 
