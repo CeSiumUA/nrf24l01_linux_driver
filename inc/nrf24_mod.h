@@ -87,4 +87,7 @@ struct nrf24_device_t {
 
 #define to_nrf24_device(device)	                        container_of(device, struct nrf24_device, dev)
 
+int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_class);
+void nrf24_mod_remove(struct spi_device *spi, struct class *nrf24_class);
+
 #endif // __NRF24_MOD_H__

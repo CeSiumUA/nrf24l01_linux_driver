@@ -1,4 +1,5 @@
 #include "main.h"
+#include "nrf24_mod.h"
 
 #define NRF24_MINORS            BIT(MINORBITS)
 
@@ -37,13 +38,11 @@ static DEFINE_IDA(nrf24_ida_dev);
 static struct class *nrf24_class;
 
 static int nrf24_probe(struct spi_device *spi){
-    int ret;
-
-    return 0;
+    return nrf24_mod_probe(spi, &nrf24_dev, nrf24_class);
 }
 
 static void nrf24_remove(struct spi_device *spi){
-
+    nrf24_mod_remove(spi, nrf24_class);
 }
 
 static int __init nrf24_init(void)

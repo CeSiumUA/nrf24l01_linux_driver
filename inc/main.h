@@ -20,6 +20,5 @@
 #include <linux/poll.h>
 #include <linux/list.h>
 #include <linux/timer.h>
-#include "nrf24_mod.h"
 
 #endif // __MAIN_H__
