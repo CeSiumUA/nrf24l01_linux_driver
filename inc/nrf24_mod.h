@@ -64,8 +64,7 @@ struct nrf24_tx_data_t {
 struct nrf24_device_t {
     u32 id;
     struct device dev;
-    struct spi_device *spi;
-    struct gpio_desc *ce;
+    struct nrf24_t nrf24_hal_dev;
 
     struct nrf24_device_config_t config;
 
