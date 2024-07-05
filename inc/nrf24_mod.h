@@ -65,6 +65,7 @@ struct nrf24_device_t {
     u32 id;
     struct device dev;
     struct nrf24_t nrf24_hal_dev;
+    struct list_head pipes;
 
     struct nrf24_device_config_t config;
 
@@ -77,7 +78,7 @@ struct nrf24_device_t {
     struct mutex tx_fifo_lock;
     struct task_struct *tx_task_struct;
     wait_queue_head_t tx_wait_queue;
-    wait_queue_head_t rx_wait_queue;
+    wait_queue_head_t tx_done_wait_queue;
     bool tx_done;
     bool tx_failed;
 
@@ -85,9 +86,9 @@ struct nrf24_device_t {
     bool rx_active;
 };
 
-#define to_nrf24_device(device)	                        container_of(device, struct nrf24_device, dev)
+#define to_nrf24_device(device)	                        container_of(device, struct nrf24_device_t, dev)
 
-int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_class);
+int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_class, struct ida *pipe_ida_ptr, struct ida *dev_ida_ptr);
 void nrf24_mod_remove(struct spi_device *spi, struct class *nrf24_class);
 
 #endif // __NRF24_MOD_H__

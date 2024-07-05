@@ -3,7 +3,7 @@
 
 #define NRF24_MINORS            BIT(MINORBITS)
 
-// FIXME: add sysfs attributes
+// FIXME: add sysfs attributes https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/5
 // ATTRIBUTE_GROUPS(nrf24);
 // ATTRIBUTE_GROUPS(nrf24_pipe);
 
@@ -38,7 +38,7 @@ static DEFINE_IDA(nrf24_ida_dev);
 static struct class *nrf24_class;
 
 static int nrf24_probe(struct spi_device *spi){
-    return nrf24_mod_probe(spi, &nrf24_dev, nrf24_class);
+    return nrf24_mod_probe(spi, &nrf24_dev, nrf24_class, &nrf24_ida_pipe, &nrf24_ida_dev);
 }
 
 static void nrf24_remove(struct spi_device *spi){
