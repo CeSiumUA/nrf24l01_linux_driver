@@ -22,3 +22,6 @@ jobs:
 
     - name: Build device tree
       run: make dtbo
+
+    - name: Check dtbo file exists
+      run: file nrf24_overlay.dtbo
