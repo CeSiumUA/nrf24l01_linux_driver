@@ -143,10 +143,80 @@ err_gpio_put:
     return ret;
 }
 
+static const struct file_operations nrf24_fops = {
+    .owner = THIS_MODULE,
+    /* TODO to be implemented in:
+    1. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/2
+    2. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/3,
+    */
+    // .read = nrf24_read,
+    // .write = nrf24_write,
+    // .open = nrf24_open,
+    // .release = nrf24_release,
+};
+
+static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, dev_t *devt, int pipe_id){
+    int ret;
+    struct nrf24_pipe_t *p;
+
+    p = kzalloc(sizeof(*p), GFP_KERNEL);
+    if(!p){
+        ret = -ENOMEM;
+        goto err_exit;
+    }
+
+    ret = ida_simple_get(pipe_ida, 0, 0, GFP_KERNEL);
+    if(ret < 0){
+        dev_err(&(nrf24_dev->dev), "%s: failed to get id\n", __func__);
+        goto err_free_pipe;
+    }
+
+    p->devt = MKDEV(MAJOR(*devt), ret);
+    p->id = pipe_id;
+
+    INIT_KFIFO(p->rx_fifo);
+    mutex_init(&(p->rx_fifo_lock));
+    init_waitqueue_head(&(p->read_wait_queue));
+    init_waitqueue_head(&(p->write_wait_queue));
+
+    // FIXME: add sysfs attributes https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/5
+    // p->dev = device_create_with_groups(nrf24_dev->dev.class,
+    //                         &(nrf24_dev->dev),
+    //                         p->devt, p,
+    //                         nrf24_pipe_groups,
+    //                         "%s.%d",
+    //                         dev_name(&(nrf24_dev->dev)),
+    //                         p->id);
+    // if(IS_ERR(p->dev)){
+    //     dev_err(&(nrf24_dev->dev), "%s: failed to create device (pipe: %d)\n", __func__, p->id);
+    //     ret = PTR_ERR(p->dev);
+    //     goto err_free_id;
+    // }
+
+    cdev_init(&(p->cdev), &nrf24_fops);
+    p->cdev.owner = THIS_MODULE;
+    ret = cdev_add(&(p->cdev), p->devt, 1);
+    if(ret < 0){
+        dev_err(&(nrf24_dev->dev), "%s: failed to add cdev (pipe: %d)\n", __func__, p->id);
+        goto err_device_destroy;
+    }
+
+    return p;
+
+err_device_destroy:
+    device_destroy(nrf24_dev->dev.class, p->devt);
+err_free_id:
+    ida_simple_remove(pipe_ida, MINOR(p->devt));
+err_free_pipe:
+    kfree(p);
+err_exit:
+    return ERR_PTR(ret);
+}
+
 int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_class, struct ida *pipe_ida_ptr, struct ida *dev_ida_ptr){
     int ret;
     struct nrf24_device_t *nrf24_dev;
-    struct nrf24_pipe *pipe;
+    struct nrf24_pipe_t *pipe;
     int i;
 
     dev_ida = dev_ida_ptr;
@@ -173,7 +243,17 @@ int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_cla
         goto err_device_unregister;
     }
 
-    // TODO: Create pipes and initialize NRF24 for RX mode
+    for(i = 0; i < NRF24_PIPES_COUNT; i++){
+        pipe = nrf24_create_pipe(nrf24_dev, devt, i);
+        if(IS_ERR(pipe)){
+            dev_err(&(spi->dev), "%s: failed to create pipe\n", __func__);
+            ret = PTR_ERR(pipe);
+            goto err_devices_destroy;
+        }
+        list_add(&(pipe->list), &(nrf24_dev->pipes));
+    }
+
+    // TODO: Initialize NRF24 for RX mode
 
     nrf24_dev->tx_task_struct = kthread_run(nrf24_tx_task, nrf24_dev, "nrf24-%d_tx_task", nrf24_dev->id);
 

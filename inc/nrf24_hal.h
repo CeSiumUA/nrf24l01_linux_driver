@@ -151,6 +151,8 @@ typedef struct nrf24_gpio_pin_t {
 
 #define NRF24_MAX_PAYLOAD_SIZE                   (32)
 
+#define NRF24_PIPES_COUNT                        (6)
+
 struct nrf24_t {
     nrf24_spi_t *spi;
     nrf24_gpio_pin_t csn;
