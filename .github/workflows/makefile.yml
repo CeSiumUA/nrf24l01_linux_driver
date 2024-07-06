@@ -21,4 +21,4 @@ jobs:
       run: make
 
     - name: Build device tree
-      run: make dts
+      run: make dtbo
