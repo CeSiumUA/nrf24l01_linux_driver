@@ -51,6 +51,8 @@ struct nrf24_pipe_t {
     wait_queue_head_t read_wait_queue;
     wait_queue_head_t write_wait_queue;
 
+    struct list_head list;
+
     u32 sent;
     bool write_done;
 };
