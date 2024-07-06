@@ -17,5 +17,8 @@ jobs:
     - name: Clean
       run: make clean
 
+    - name: Build module
+      run: make
+
     - name: Build device tree
       run: make dts
