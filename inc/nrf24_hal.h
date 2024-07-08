@@ -141,6 +141,12 @@ typedef struct nrf24_gpio_pin_t {
 #define NRF24_REG_RX_PW_RESET_VALUE              (0b00000000)
 
 #define NRF24_REG_FIFO_STATUS                    (0x17)
+#define NRF24_REG_FIFO_STATUS_RESET_VALUE        (0b00010001)
+#define NRF24_REG_FIFO_STATUS_MASK_RX_EMPTY      (1 << 0)
+#define NRF24_REG_FIFO_STATUS_MASK_RX_FULL       (1 << 1)
+#define NRF24_REG_FIFO_STATUS_MASK_TX_EMPTY      (1 << 4)
+#define NRF24_REG_FIFO_STATUS_MASK_TX_FULL       (1 << 5)
+
 #define NRF24_REG_DYNPD                          (0x1C)
 #define NRF24_REG_DYNPD_RESET_VALUE              (0b00000000)
 
@@ -264,6 +270,7 @@ nrf24_hal_status_t nrf24_set_major_pipe_address(struct nrf24_t *nrf24, uint8_t p
 nrf24_hal_status_t nrf24_set_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_major_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
+nrf24_hal_status_t nrf24_get_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_set_tx_address(struct nrf24_t *nrf24, uint8_t *address);
 nrf24_hal_status_t nrf24_get_tx_address(struct nrf24_t *nrf24, uint8_t *address);
 nrf24_hal_status_t nrf24_set_rx_payload_width(struct nrf24_t *nrf24, uint8_t pipe, uint8_t width);

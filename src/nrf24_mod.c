@@ -1,5 +1,14 @@
 #include "nrf24_mod.h"
 
+const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
+const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
+const enum nrf24_address_width_t nrf24_default_address_width = NRF24_AW_5_BYTES;
+const enum nrf24_auto_retransmit_count_t nrf24_default_auto_retransmit_count = NRF24_ARC_15;
+const enum nrf24_auto_retransmit_delay_t nrf24_default_auto_retransmit_delay = NRF24_ARD_4000_US;
+const enum nrf24_mode_t nrf24_default_mode = NRF24_PM_RX;
+const enum nrf24_tx_power_t nrf24_default_tx_power = NRF24_TXP_0_DBM;
+const u8 nrf24_default_channel = 20;
+
 static struct ida *dev_ida;
 static struct ida *pipe_ida;
 
@@ -17,33 +26,277 @@ static struct device_type nrf24_dev_type = {
 };
 
 static void nrf24_isr_work_handler(struct work_struct *work){
-    // TODO: implement isr work handler
+    struct nrf24_device_t *device;
+    nrf24_hal_status_t status;
+    uint8_t nrf24_status;
+    uint8_t nrf24_clear_status;
+    u32 usecs;
+
+    device = container_of(work, struct nrf24_device_t, isr_work);
+
+    status = nrf24_get_status(&(device->nrf24_hal_dev), &nrf24_status);
+    if(status != HAL_OK){
+        dev_err(&(device->dev), "%s: failed to get status\n", __func__);
+        return;
+    }
+
+    if(nrf24_status & NRF24_REG_STATUS_MASK_RX_DR){
+        dev_dbg(&(device->dev), "%s: rx dr\n", __func__);
+        device->rx_active = true;
+        usecs = (8 * (1 + device->config.addr_width + NRF24_MAX_PAYLOAD_SIZE + (device->config.crc_mode - 1))) + 9;
+        usecs /= (device->config.data_rate);
+        usecs += (usecs / 2);
+        mod_timer(&(device->rx_active_timer), jiffies + usecs_to_jiffies(usecs));
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_RX_DR;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        if(status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to set status\n", __func__);
+            return;
+        }
+
+        schedule_work(&(device->rx_work));
+    }
+
+    if(nrf24_status & NRF24_REG_STATUS_MASK_TX_DS){
+        dev_dbg(&(device->dev), "%s: tx ds\n", __func__);
+        device->tx_done = true;
+        device->tx_failed = false;
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_TX_DS;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        if(status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to set status\n", __func__);
+            return;
+        }
+        wake_up_interruptible(&(device->tx_done_wait_queue));
+    }
+
+    if(nrf24_status & NRF24_REG_STATUS_MASK_MAX_RT){
+        dev_err(&(device->dev), "%s: max rt\n", __func__);
+        device->tx_failed = true;
+        device->tx_done = true;
+        status = nrf24_flush_tx_fifo(&(device->nrf24_hal_dev));
+        if(status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to flush tx fifo\n", __func__);
+            return;
+        }
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_MAX_RT;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        if(status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to set status\n", __func__);
+            return;
+        }
+        wake_up_interruptible(&(device->tx_done_wait_queue));
+    }
 }
 
 static void nrf24_rx_work_handler(struct work_struct *work){
-    // TODO: implement rx work handler
+    struct nrf24_device_t *device;
+    struct nrf24_pipe_t *pipe;
+    u8 data_buffer[NRF24_MAX_PAYLOAD_SIZE];
+    uint8_t fifo_status;
+    uint8_t status;
+    uint8_t pipe_id;
+    nrf24_hal_status_t hal_status;
+
+    device = container_of(work, struct nrf24_device_t, rx_work);
+
+    while(true){
+        hal_status = nrf24_get_fifo_status(&(device->nrf24_hal_dev), &fifo_status);
+        if(hal_status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to get fifo status\n", __func__);
+            return;
+        }
+
+        if(fifo_status & NRF24_REG_FIFO_STATUS_MASK_RX_EMPTY){
+            break;
+        }
+
+        hal_status = nrf24_get_status(&(device->nrf24_hal_dev), &status);
+        if(hal_status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to get status\n", __func__);
+            return;
+        }
+
+        pipe_id = (status & NRF24_REG_STATUS_MASK_RX_P_NO) >> 1;
+        if(pipe_id > (NRF24_PIPES_COUNT - 1)){
+            dev_err(&(device->dev), "%s: invalid pipe id (%u) or rx fifo empty\n", __func__, pipe_id);
+            return;
+        }
+
+        pipe = device->pipes[pipe_id];
+
+        memset(data_buffer, 0, (sizeof(data_buffer) / sizeof(*data_buffer)));
+
+        hal_status = nrf24_get_rx_payload_width(&(device->nrf24_hal_dev), pipe_id, &(pipe->config.plw));
+        if(hal_status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to get rx payload width\n", __func__);
+            return;
+        }
+
+        hal_status = nrf24_read_rx_fifo(&(device->nrf24_hal_dev), data_buffer, pipe->config.plw);
+        if(hal_status != HAL_OK){
+            dev_err(&(device->dev), "%s: failed to read rx fifo\n", __func__);
+            return;
+        }
+
+        if(mutex_lock_interruptible(&(pipe->rx_fifo_lock))){
+            dev_err(&(device->dev), "%s: failed to lock rx fifo mutex\n", __func__);
+            return;
+        }
+        kfifo_in(&(pipe->rx_fifo), data_buffer, pipe->config.plw);
+        mutex_unlock(&(pipe->rx_fifo_lock));
+
+        wake_up_interruptible(&(pipe->read_wait_queue));
+    }
 }
 
 static void nrf24_rx_active_timer_handler(struct timer_list *timer){
-    // TODO: implement rx active timer handler
+    struct nrf24_device_t *device = from_timer(device, timer, rx_active_timer);
+
+    dev_dbg(&(device->dev), "%s: rx routine finished!\n", __func__);
+
+    device->rx_active = false;
+
+    if(!kfifo_is_empty(&(device->tx_fifo))){
+        dev_dbg(&(device->dev), "%s: waking up TX\n", __func__);
+        wake_up_interruptible(&(device->tx_wait_queue));
+    }
 }
 
 static irqreturn_t nrf24_irq_handler(int irq, void *dev_id){
-    // TODO: implement irq handler
+    struct nrf24_device_t *device = dev_id;
+    unsigned long flags;
+
+    spin_lock_irqsave(&(device->lock), flags);
+
+    schedule_work(&(device->isr_work));
+
+    spin_unlock_irqrestore(&(device->lock), flags);
+
     return IRQ_HANDLED;
 }
 
 static int nrf24_tx_task(void *data){
-    // TODO: implement tx task
+    struct nrf24_device_t *nrf24_dev = data;
+    struct nrf24_pipe_t *pipe;
+    struct nrf24_tx_data_t tx_data;
+    nrf24_hal_status_t hal_status;
+    int ret;
+
+    while(true){
+        dev_dbg(&(nrf24_dev->dev), "%s: waiting for new messages in TX FIFO\n", __func__);
+
+        wait_event_interruptible(nrf24_dev->tx_wait_queue,
+                                    kthread_should_stop() || (!nrf24_dev->rx_active && !kfifo_is_empty(&(nrf24_dev->tx_fifo))));
+
+        if(kthread_should_stop()){
+            break;
+        }
+
+        if(mutex_lock_interruptible(&(nrf24_dev->tx_fifo_lock))){
+            dev_err(&(nrf24_dev->dev), "%s: failed to lock tx fifo mutex\n", __func__);
+            continue;
+        }
+
+        ret = kfifo_out(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data));
+        if(ret != sizeof(tx_data)){
+            dev_err(&(nrf24_dev->dev), "%s: failed to read tx fifo\n", __func__);
+            mutex_unlock(&(nrf24_dev->tx_fifo_lock));
+            continue;
+        }
+
+        mutex_unlock(&(nrf24_dev->tx_fifo_lock));
+        pipe = tx_data.pipe;
+
+        nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
+
+        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, tx_data.size);
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to write to tx FIFO\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        nrf24_dev->tx_done = false;
+
+        nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+
+        wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
+
+        if(kthread_should_stop()){
+            break;
+        }
+
+        if(nrf24_dev->tx_failed){
+            pipe->sent = 0;
+        }
+        else{
+            pipe->sent = tx_data.size;
+        }
+
+        pipe->write_done = true;
+        wake_up_interruptible(&(pipe->write_wait_queue));
+
+restore_rx_mode:
+        if(kfifo_is_empty(&(nrf24_dev->tx_fifo)) || nrf24_dev->rx_active){
+            dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
+
+            nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
+
+            pipe = nrf24_dev->pipes[0];
+            hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+                continue;
+            }
+
+            hal_status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
+                continue;
+            }
+
+            nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+        }
+    }
     
     return 0;
 }
 
-static void nrf24_destroy_devices(struct nrf24_device_t *nrf24_dev){
-    struct nrf24_pipe_t *pipe, *tmp;
+static void nrf24_init_device_configuration(struct nrf24_device_t *nrf24_dev){
+    nrf24_dev->config.crc_mode = nrf24_default_crc_mode;
+    nrf24_dev->config.data_rate = nrf24_default_air_data_rate;
+    nrf24_dev->config.addr_width = nrf24_default_address_width;
+    nrf24_dev->config.auto_retransmit_count = nrf24_default_auto_retransmit_count;
+    nrf24_dev->config.auto_retransmit_delay = nrf24_default_auto_retransmit_delay;
+    nrf24_dev->config.mode = nrf24_default_mode;
+    nrf24_dev->config.tx_power = nrf24_default_tx_power;
+    nrf24_dev->config.channel = nrf24_default_channel;
+}
 
-    list_for_each_entry_safe(pipe, tmp, &(nrf24_dev->pipes), list){
-        list_del(&(pipe->list));
+static void nrf24_destroy_devices(struct nrf24_device_t *nrf24_dev){
+    struct nrf24_pipe_t *pipe;
+    int i;
+
+    for(i = 0; i < NRF24_PIPES_COUNT; i++){
+        pipe = nrf24_dev->pipes[i];
         cdev_del(&(pipe->cdev));
         device_destroy(nrf24_dev->dev.class, MINOR(pipe->devt));
         ida_simple_remove(pipe_ida, pipe->id);
@@ -81,6 +334,9 @@ static struct nrf24_device_t *nrf24_device_init(struct spi_device *spi, struct c
     dev_set_name(&(nrf24_dev->dev), "nrf24-%d", id);
 
     nrf24_dev->id = id;
+
+    nrf24_dev->rx_active = false;
+
     nrf24_dev->dev.parent = &(spi->dev);
     nrf24_dev->dev.class = nrf24_class;
     nrf24_dev->dev.type = &(nrf24_dev_type);
@@ -104,8 +360,6 @@ static struct nrf24_device_t *nrf24_device_init(struct spi_device *spi, struct c
     spin_lock_init(&(nrf24_dev->lock));
     mutex_init(&(nrf24_dev->tx_fifo_lock));
 
-    INIT_LIST_HEAD(&(nrf24_dev->pipes));
-
     timer_setup(&(nrf24_dev->rx_active_timer), nrf24_rx_active_timer_handler, 0);
 
     goto exit;
@@ -114,6 +368,103 @@ err_free_id:
     ida_simple_remove(dev_ida, id);
 exit:
     return nrf24_dev;
+}
+
+static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
+    nrf24_hal_status_t status;
+    struct nrf24_pipe_t *pipe;
+    int i;
+
+    nrf24_init_device_configuration(nrf24_dev);
+
+    status = nrf24_soft_reset(&(nrf24_dev->nrf24_hal_dev));
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to reset nrf24\n", __func__);
+        return -EIO;
+    }
+
+    for(i = 0; i < NRF24_PIPES_COUNT; i++){
+        pipe = nrf24_dev->pipes[i];
+
+        status = nrf24_get_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to get pipe address\n", __func__);
+            return -EIO;
+        }
+
+        status = nrf24_set_rx_payload_width(&(nrf24_dev->nrf24_hal_dev), pipe->id, pipe->config.plw);
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set rx payload width\n", __func__);
+            return -EIO;
+        }
+
+        status = nrf24_set_en_rx_pipe(&(nrf24_dev->nrf24_hal_dev), pipe->id, true);
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set en rx pipe\n", __func__);
+            return -EIO;
+        }
+    }
+
+    status = nrf24_set_crc_mode(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.crc_mode);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to set crc mode\n", __func__);
+        return -EIO;
+    }
+
+    status = nrf24_set_radio_data_rate(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.data_rate);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to set radio data rate\n", __func__);
+        return -EIO;
+    }
+
+    status = nrf24_set_address_width(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.addr_width);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to set address width\n", __func__);
+        return -EIO;
+    }
+
+    status = nrf24_setup_retransmission(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.auto_retransmit_delay, nrf24_dev->config.auto_retransmit_count);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to setup retransmission\n", __func__);
+        return -EIO;
+    }
+
+    if(nrf24_dev->config.mode == NRF24_PM_TX){
+        status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+            return -EIO;
+        }
+    }
+    else{
+        status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
+            return -EIO;
+        }
+    }
+
+    status = nrf24_set_radio_output_power(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.tx_power);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to set radio output power\n", __func__);
+        return -EIO;
+    }
+
+    status = nrf24_set_radio_channel(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.channel);
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to set radio channel\n", __func__);
+        return -EIO;
+    }
+
+    status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
+        return -EIO;
+    }
+
+    nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+
+    return status;
 }
 
 static int nrf24_gpio_init(struct nrf24_device_t *nrf24_dev){
@@ -201,6 +552,8 @@ static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, 
         goto err_device_destroy;
     }
 
+    p->config.plw = NRF24_MAX_PAYLOAD_SIZE;
+
     return p;
 
 err_device_destroy:
@@ -250,10 +603,14 @@ int nrf24_mod_probe(struct spi_device *spi, dev_t *devt, struct class *nrf24_cla
             ret = PTR_ERR(pipe);
             goto err_devices_destroy;
         }
-        list_add(&(pipe->list), &(nrf24_dev->pipes));
+        nrf24_dev->pipes[i] = pipe;
     }
 
-    // TODO: Initialize NRF24 for RX mode
+    ret = nrf24_hal_rx_mode_init(nrf24_dev);
+    if(ret < 0){
+        dev_err(&(spi->dev), "%s: failed to init nrf24 for rx mode\n", __func__);
+        goto err_devices_destroy;
+    }
 
     nrf24_dev->tx_task_struct = kthread_run(nrf24_tx_task, nrf24_dev, "nrf24-%d_tx_task", nrf24_dev->id);
 

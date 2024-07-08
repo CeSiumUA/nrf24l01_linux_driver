@@ -32,11 +32,12 @@ struct nrf24_device_config_t {
     enum nrf24_auto_retransmit_delay_t auto_retransmit_delay;
     enum nrf24_mode_t mode;
     enum nrf24_tx_power_t tx_power;
+    u8 channel;
 };
 
 struct nrf24_pipe_config_t {
     u64 addr;
-    ssize_t plw;
+    u8 plw;
 };
 
 struct nrf24_pipe_t {
@@ -51,14 +52,12 @@ struct nrf24_pipe_t {
     wait_queue_head_t read_wait_queue;
     wait_queue_head_t write_wait_queue;
 
-    struct list_head list;
-
     u32 sent;
     bool write_done;
 };
 
 struct nrf24_tx_data_t {
-    struct nrf24_pipe *pipe;
+    struct nrf24_pipe_t *pipe;
     u8 size;
     u8 payload[NRF24_MAX_PAYLOAD_SIZE];
 };
@@ -67,7 +66,7 @@ struct nrf24_device_t {
     u32 id;
     struct device dev;
     struct nrf24_t nrf24_hal_dev;
-    struct list_head pipes;
+    struct nrf24_pipe_t *pipes[NRF24_PIPES_COUNT];
 
     struct nrf24_device_config_t config;
 
