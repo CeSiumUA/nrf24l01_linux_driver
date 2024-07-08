@@ -57,7 +57,7 @@ struct nrf24_pipe_t {
 };
 
 struct nrf24_tx_data_t {
-    struct nrf24_pipe *pipe;
+    struct nrf24_pipe_t *pipe;
     u8 size;
     u8 payload[NRF24_MAX_PAYLOAD_SIZE];
 };

@@ -270,6 +270,7 @@ nrf24_hal_status_t nrf24_set_major_pipe_address(struct nrf24_t *nrf24, uint8_t p
 nrf24_hal_status_t nrf24_set_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_major_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
+nrf24_hal_status_t nrf24_get_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_set_tx_address(struct nrf24_t *nrf24, uint8_t *address);
 nrf24_hal_status_t nrf24_get_tx_address(struct nrf24_t *nrf24, uint8_t *address);
 nrf24_hal_status_t nrf24_set_rx_payload_width(struct nrf24_t *nrf24, uint8_t pipe, uint8_t width);

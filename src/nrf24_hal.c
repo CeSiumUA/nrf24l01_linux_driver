@@ -315,6 +315,17 @@ nrf24_hal_status_t nrf24_get_minor_pipe_address(struct nrf24_t *nrf24, uint8_t p
     return nrf24_read_register(nrf24, NRF24_REG_RX_ADDR_P0 + pipe, address, 1);
 }
 
+nrf24_hal_status_t nrf24_get_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address){
+    if(pipe < 2){
+        return nrf24_get_major_pipe_address(nrf24, pipe, address);
+    }
+    else if(pipe > 1 && pipe < 6){
+        return nrf24_get_minor_pipe_address(nrf24, pipe, address);
+    }
+
+    return HAL_ERROR;
+}
+
 nrf24_hal_status_t nrf24_set_tx_address(struct nrf24_t *nrf24, uint8_t *address) {
     return nrf24_write_register(nrf24, NRF24_REG_TX_ADDR, address, 5);
 }

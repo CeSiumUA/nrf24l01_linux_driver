@@ -177,7 +177,104 @@ static irqreturn_t nrf24_irq_handler(int irq, void *dev_id){
 }
 
 static int nrf24_tx_task(void *data){
-    // TODO: implement tx task
+    struct nrf24_device_t *nrf24_dev = data;
+    struct nrf24_pipe_t *pipe;
+    struct nrf24_tx_data_t tx_data;
+    nrf24_hal_status_t hal_status;
+    int ret;
+
+    while(true){
+        dev_dbg(&(nrf24_dev->dev), "%s: waiting for new messages in TX FIFO\n", __func__);
+
+        wait_event_interruptible(nrf24_dev->tx_wait_queue,
+                                    kthread_should_stop() || (!nrf24_dev->rx_active && !kfifo_is_empty(&(nrf24_dev->tx_fifo))));
+
+        if(kthread_should_stop()){
+            break;
+        }
+
+        if(mutex_lock_interruptible(&(nrf24_dev->tx_fifo_lock))){
+            dev_err(&(nrf24_dev->dev), "%s: failed to lock tx fifo mutex\n", __func__);
+            continue;
+        }
+
+        ret = kfifo_out(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data));
+        if(ret != sizeof(tx_data)){
+            dev_err(&(nrf24_dev->dev), "%s: failed to read tx fifo\n", __func__);
+            mutex_unlock(&(nrf24_dev->tx_fifo_lock));
+            continue;
+        }
+
+        mutex_unlock(&(nrf24_dev->tx_fifo_lock));
+        pipe = tx_data.pipe;
+
+        nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
+
+        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, tx_data.size);
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to write to tx FIFO\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+
+        nrf24_dev.tx_done = false;
+        wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
+
+        if(kthread_should_stop()){
+            break;
+        }
+
+        if(nrf24_dev->tx_failed){
+            pipe->sent = 0;
+        }
+        else{
+            pipe->sent = tx_data.size;
+        }
+
+        pipe->write_done = true;
+        wake_up_interruptible(&(pipe->write_wait_queue));
+
+restore_rx_mode:
+        if(kfifo_is_empty(&(nrf24_dev->tx_fifo)) || nrf24_dev->rx_active){
+            dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
+
+            nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
+
+            pipe = nrf24_dev->pipes[0];
+            hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+                continue;
+            }
+
+            hal_status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
+                continue;
+            }
+
+            nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+        }
+    }
     
     return 0;
 }
@@ -287,6 +384,13 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
 
     for(i = 0; i < NRF24_PIPES_COUNT; i++){
         pipe = nrf24_dev->pipes[i];
+
+        status = nrf24_get_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
+        if(status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to get pipe address\n", __func__);
+            return -EIO;
+        }
+
         status = nrf24_set_rx_payload_width(&(nrf24_dev->nrf24_hal_dev), pipe->id, pipe->config.plw);
         if(status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to set rx payload width\n", __func__);
