@@ -29,6 +29,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
     struct nrf24_device_t *device;
     nrf24_hal_status_t status;
     uint8_t nrf24_status;
+    uint8_t nrf24_clear_status;
     u32 usecs;
 
     device = container_of(work, struct nrf24_device_t, isr_work);
@@ -46,7 +47,8 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         usecs /= (device->config.data_rate);
         usecs += (usecs / 2);
         mod_timer(&(device->rx_active_timer), jiffies + usecs_to_jiffies(usecs));
-        status = nrf24_set_status(&(device->nrf24_hal_dev), NRF24_REG_STATUS_MASK_RX_DR);
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_RX_DR;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -59,7 +61,8 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         dev_dbg(&(device->dev), "%s: tx ds\n", __func__);
         device->tx_done = true;
         device->tx_failed = false;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), NRF24_REG_STATUS_MASK_TX_DS);
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_TX_DS;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -76,7 +79,8 @@ static void nrf24_isr_work_handler(struct work_struct *work){
             dev_err(&(device->dev), "%s: failed to flush tx fifo\n", __func__);
             return;
         }
-        status = nrf24_set_status(&(device->nrf24_hal_dev), NRF24_REG_STATUS_MASK_MAX_RT);
+        nrf24_clear_status = NRF24_REG_STATUS_MASK_MAX_RT;
+        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -94,7 +98,7 @@ static void nrf24_rx_work_handler(struct work_struct *work){
     uint8_t pipe_id;
     nrf24_hal_status_t hal_status;
 
-    device - container_of(work, struct nrf24_device_t, rx_work);
+    device = container_of(work, struct nrf24_device_t, rx_work);
 
     while(true){
         hal_status = nrf24_get_fifo_status(&(device->nrf24_hal_dev), &fifo_status);

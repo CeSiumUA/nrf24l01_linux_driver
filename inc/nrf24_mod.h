@@ -37,7 +37,7 @@ struct nrf24_device_config_t {
 
 struct nrf24_pipe_config_t {
     u64 addr;
-    ssize_t plw;
+    u8 plw;
 };
 
 struct nrf24_pipe_t {
