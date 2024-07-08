@@ -29,4 +29,4 @@ dtbo: dts/nrf24_overlay.dts
 	dtc -@ -I dts -O dtb -o nrf24_overlay.dtbo dts/nrf24_overlay.dts
 
 clean:
-	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c *.mod .tmp_versions *.dtb *.dtbo modules.order Module.symvers
+	rm -rf *.o src/*.o *~ core .depend .*.cmd src/.*.cmd *.ko *.mod.c *.mod .tmp_versions *.dtb *.dtbo modules.order Module.symvers
