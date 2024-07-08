@@ -234,9 +234,10 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
+        nrf24_dev->tx_done = false;
+
         nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
-        nrf24_dev.tx_done = false;
         wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
 
         if(kthread_should_stop()){
