@@ -1,4 +1,5 @@
 #include "nrf24_mod.h"
+#include "nrf24_sysfs.h"
 
 const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
 const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
@@ -11,6 +12,9 @@ const u8 nrf24_default_channel = 20;
 
 static struct ida *dev_ida;
 static struct ida *pipe_ida;
+
+ATTRIBUTE_GROUPS(nrf24);
+ATTRIBUTE_GROUPS(nrf24_pipe);
 
 static void nrf24_dev_release(struct device *dev){
     struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
@@ -341,8 +345,7 @@ static struct nrf24_device_t *nrf24_device_init(struct spi_device *spi, struct c
     nrf24_dev->dev.class = nrf24_class;
     nrf24_dev->dev.type = &(nrf24_dev_type);
 
-    // FIXME: add sysfs attributes https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/5
-    // nrf24_dev->dev.groups = nrf24_groups;
+    nrf24_dev->dev.groups = nrf24_groups;
 
     ret = device_register(&(nrf24_dev->dev));
     if (ret) {
@@ -530,19 +533,18 @@ static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, 
     init_waitqueue_head(&(p->read_wait_queue));
     init_waitqueue_head(&(p->write_wait_queue));
 
-    // FIXME: add sysfs attributes https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/5
-    // p->dev = device_create_with_groups(nrf24_dev->dev.class,
-    //                         &(nrf24_dev->dev),
-    //                         p->devt, p,
-    //                         nrf24_pipe_groups,
-    //                         "%s.%d",
-    //                         dev_name(&(nrf24_dev->dev)),
-    //                         p->id);
-    // if(IS_ERR(p->dev)){
-    //     dev_err(&(nrf24_dev->dev), "%s: failed to create device (pipe: %d)\n", __func__, p->id);
-    //     ret = PTR_ERR(p->dev);
-    //     goto err_free_id;
-    // }
+    p->dev = device_create_with_groups(nrf24_dev->dev.class,
+                            &(nrf24_dev->dev),
+                            p->devt, p,
+                            nrf24_pipe_groups,
+                            "%s.%d",
+                            dev_name(&(nrf24_dev->dev)),
+                            p->id);
+    if(IS_ERR(p->dev)){
+        dev_err(&(nrf24_dev->dev), "%s: failed to create device (pipe: %d)\n", __func__, p->id);
+        ret = PTR_ERR(p->dev);
+        goto err_free_id;
+    }
 
     cdev_init(&(p->cdev), &nrf24_fops);
     p->cdev.owner = THIS_MODULE;
@@ -632,5 +634,13 @@ err_device_unregister:
 }
 
 void nrf24_mod_remove(struct spi_device *spi, struct class *nrf24_class){
+    struct nrf24_device_t *nrf24_dev = spi_get_drvdata(spi);
 
+    nrf24_gpio_free(nrf24_dev);
+
+    kthread_stop(nrf24_dev->tx_task_struct);
+
+    nrf24_destroy_devices(nrf24_dev);
+
+    device_unregister(&(nrf24_dev->dev));
 }

@@ -3,10 +3,6 @@
 
 #define NRF24_MINORS            BIT(MINORBITS)
 
-// FIXME: add sysfs attributes https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/5
-// ATTRIBUTE_GROUPS(nrf24);
-// ATTRIBUTE_GROUPS(nrf24_pipe);
-
 MODULE_AUTHOR("CeSiumUA");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("SPI driver for NRF24");

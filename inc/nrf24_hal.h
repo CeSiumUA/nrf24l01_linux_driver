@@ -154,6 +154,8 @@ typedef struct nrf24_gpio_pin_t {
 #define NRF24_REG_FEATURE_RESET_VALUE            (0b00000000)
 
 #define NRF24_BASE_FREQUENCY                     (2400)
+#define NRF24_MAX_CHANNEL                        (127)
+#define NRF24_MIN_CHANNEL                        (1)
 
 #define NRF24_MAX_PAYLOAD_SIZE                   (32)
 
@@ -248,15 +250,16 @@ nrf24_hal_status_t nrf24_power_down(struct nrf24_t *nrf24);
 nrf24_hal_status_t nrf24_set_prx_mode(struct nrf24_t *nrf24);
 nrf24_hal_status_t nrf24_set_ptx_mode(struct nrf24_t *nrf24);
 nrf24_hal_status_t nrf24_set_crc_mode(struct nrf24_t *nrf24, enum nrf24_crc_mode_t crc_mode);
+nrf24_hal_status_t nrf24_get_crc_mode(struct nrf24_t *nrf24, enum nrf24_crc_mode_t *crc_mode);
 nrf24_hal_status_t nrf24_get_config(struct nrf24_t *nrf24, uint8_t *config);
 nrf24_hal_status_t nrf24_set_auto_ack(struct nrf24_t *nrf24, uint8_t pipe, bool enable);
 nrf24_hal_status_t nrf24_get_auto_ack(struct nrf24_t *nrf24, uint8_t *en_aa);
 nrf24_hal_status_t nrf24_set_en_rx_pipe(struct nrf24_t *nrf24, uint8_t pipe, bool enable);
 nrf24_hal_status_t nrf24_get_en_rx_addr(struct nrf24_t *nrf24, uint8_t *en_rxaddr);
 nrf24_hal_status_t nrf24_set_address_width(struct nrf24_t *nrf24, enum nrf24_address_width_t addr_width);
-nrf24_hal_status_t nrf24_get_address_width(struct nrf24_t *nrf24, uint8_t *addr_width);
+nrf24_hal_status_t nrf24_get_address_width(struct nrf24_t *nrf24, enum nrf24_address_width_t *addr_width);
 nrf24_hal_status_t nrf24_setup_retransmission(struct nrf24_t *nrf24, enum nrf24_auto_retransmit_delay_t delay, enum nrf24_auto_retransmit_count_t count);
-nrf24_hal_status_t nrf24_get_setup_retransmission(struct nrf24_t *nrf24, uint8_t *setup_retr);
+nrf24_hal_status_t nrf24_get_setup_retransmission(struct nrf24_t *nrf24, enum nrf24_auto_retransmit_delay_t *delay, enum nrf24_auto_retransmit_count_t *count);
 nrf24_hal_status_t nrf24_set_radio_output_power(struct nrf24_t *nrf24, enum nrf24_tx_power_t power);
 nrf24_hal_status_t nrf24_set_radio_channel(struct nrf24_t *nrf24, uint8_t channel);
 nrf24_hal_status_t nrf24_get_radio_channel(struct nrf24_t *nrf24, uint8_t *rf_ch);
@@ -268,6 +271,7 @@ nrf24_hal_status_t nrf24_get_observe_tx(struct nrf24_t *nrf24, uint8_t *observe_
 nrf24_hal_status_t nrf24_get_carrier_detect(struct nrf24_t *nrf24, uint8_t *cd);
 nrf24_hal_status_t nrf24_set_major_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_set_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
+nrf24_hal_status_t nrf24_set_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_major_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_minor_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
 nrf24_hal_status_t nrf24_get_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
