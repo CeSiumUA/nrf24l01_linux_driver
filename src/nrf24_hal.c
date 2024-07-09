@@ -289,6 +289,20 @@ nrf24_hal_status_t nrf24_set_radio_output_power(struct nrf24_t *nrf24, enum nrf2
     return nrf24_write_register(nrf24, NRF24_REG_RF_SETUP, &rf_setup, 1);
 }
 
+nrf24_hal_status_t nrf24_get_radio_output_power(struct nrf24_t *nrf24, enum nrf24_tx_power_t *power) {
+    nrf24_hal_status_t status;
+    uint8_t rf_setup;
+
+    status = nrf24_read_register(nrf24, NRF24_REG_RF_SETUP, &rf_setup, 1);
+    if (status != HAL_OK) {
+        return status;
+    }
+
+    *power = (enum nrf24_tx_power_t)((rf_setup >> 1) & 0x03);
+
+    return HAL_OK;
+}
+
 nrf24_hal_status_t nrf24_set_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_air_data_rate_t data_rate) {
     nrf24_hal_status_t status;
     uint8_t rf_setup;
@@ -302,6 +316,20 @@ nrf24_hal_status_t nrf24_set_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_a
     rf_setup |= (data_rate << 3);
 
     return nrf24_write_register(nrf24, NRF24_REG_RF_SETUP, &rf_setup, 1);
+}
+
+nrf24_hal_status_t nrf24_get_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_air_data_rate_t *data_rate) {
+    nrf24_hal_status_t status;
+    uint8_t rf_setup;
+
+    status = nrf24_read_register(nrf24, NRF24_REG_RF_SETUP, &rf_setup, 1);
+    if (status != HAL_OK) {
+        return status;
+    }
+
+    *data_rate = (enum nrf24_air_data_rate_t)((rf_setup >> 3) & 0x01);
+
+    return HAL_OK;
 }
 
 nrf24_hal_status_t nrf24_get_rf_setup(struct nrf24_t *nrf24, uint8_t *rf_setup) {

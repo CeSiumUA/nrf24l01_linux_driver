@@ -285,6 +285,76 @@ static ssize_t rf_ch_store(struct device *dev, struct device_attribute *attr, co
     return count;
 }
 
+static ssize_t rf_dr_show(struct device *dev, struct device_attribute *attr, char *buf){
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    nrf24_hal_status_t status;
+    enum nrf24_air_data_rate_t data_rate;
+
+    status = nrf24_get_radio_data_rate(&(nrf24_dev->nrf24_hal_dev), &data_rate);
+    if(status != HAL_OK){
+        return -EIO;
+    }
+
+    return scnprintf(buf, PAGE_SIZE, "%d\n", (data_rate + 1));
+}
+
+static ssize_t rf_dr_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    nrf24_hal_status_t status;
+    enum nrf24_air_data_rate_t data_rate;
+
+    if(kstrtou8(buf, 0, (u8 *)(&data_rate))){
+        return -EINVAL;
+    }
+
+    data_rate--;
+
+    if(data_rate < NRF24_ADR_1_MBPS || data_rate > NRF24_ADR_2_MBPS){
+        return -EINVAL;
+    }
+
+    status = nrf24_set_radio_data_rate(&(nrf24_dev->nrf24_hal_dev), data_rate);
+    if(status != HAL_OK){
+        return -EIO;
+    }
+
+    return count;
+}
+
+static ssize_t rf_pwr_show(struct device *dev, struct device_attribute *attr, char *buf){
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    nrf24_hal_status_t status;
+    enum nrf24_tx_power_t tx_power;
+
+    status = nrf24_get_radio_output_power(&(nrf24_dev->nrf24_hal_dev), &tx_power);
+    if(status != HAL_OK){
+        return -EIO;
+    }
+
+    return scnprintf(buf, PAGE_SIZE, "%d (%d dBm)\n", tx_power, ((3 - tx_power) * (-6)));
+}
+
+static ssize_t rf_pwr_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    nrf24_hal_status_t status;
+    enum nrf24_tx_power_t tx_power;
+
+    if(kstrtou8(buf, 0, (u8 *)(&tx_power))){
+        return -EINVAL;
+    }
+
+    if(tx_power < NRF24_TXP_ATTENUATION_18_DBM || tx_power > NRF24_TXP_0_DBM){
+        return -EINVAL;
+    }
+
+    status = nrf24_set_radio_output_power(&(nrf24_dev->nrf24_hal_dev), tx_power);
+    if(status != HAL_OK){
+        return -EIO;
+    }
+
+    return count;
+}
+
 static ssize_t status_show(struct device *dev, struct device_attribute *attr, char *buf){
     struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
     nrf24_hal_status_t status;
@@ -623,6 +693,8 @@ static DEVICE_ATTR_RO(dynpd);
 static DEVICE_ATTR_RW(en_dpl);
 static DEVICE_ATTR_RW(en_ack_pay);
 static DEVICE_ATTR_RW(en_dyn_ack);
+static DEVICE_ATTR_RW(rf_dr);
+static DEVICE_ATTR_RW(rf_pwr);
 
 struct attribute *nrf24_pipe_attrs[] = {
     &(dev_attr_ack.attr),
@@ -650,5 +722,7 @@ struct attribute *nrf24_attrs[] = {
     &(dev_attr_en_dpl.attr),
     &(dev_attr_en_ack_pay.attr),
     &(dev_attr_en_dyn_ack.attr),
+    &(dev_attr_rf_dr.attr),
+    &(dev_attr_rf_pwr.attr),
     NULL
 };

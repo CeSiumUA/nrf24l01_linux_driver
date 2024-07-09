@@ -261,9 +261,11 @@ nrf24_hal_status_t nrf24_get_address_width(struct nrf24_t *nrf24, enum nrf24_add
 nrf24_hal_status_t nrf24_setup_retransmission(struct nrf24_t *nrf24, enum nrf24_auto_retransmit_delay_t delay, enum nrf24_auto_retransmit_count_t count);
 nrf24_hal_status_t nrf24_get_setup_retransmission(struct nrf24_t *nrf24, enum nrf24_auto_retransmit_delay_t *delay, enum nrf24_auto_retransmit_count_t *count);
 nrf24_hal_status_t nrf24_set_radio_output_power(struct nrf24_t *nrf24, enum nrf24_tx_power_t power);
+nrf24_hal_status_t nrf24_get_radio_output_power(struct nrf24_t *nrf24, enum nrf24_tx_power_t *power);
 nrf24_hal_status_t nrf24_set_radio_channel(struct nrf24_t *nrf24, uint8_t channel);
 nrf24_hal_status_t nrf24_get_radio_channel(struct nrf24_t *nrf24, uint8_t *rf_ch);
 nrf24_hal_status_t nrf24_set_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_air_data_rate_t data_rate);
+nrf24_hal_status_t nrf24_get_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_air_data_rate_t *data_rate);
 nrf24_hal_status_t nrf24_get_rf_setup(struct nrf24_t *nrf24, uint8_t *rf_setup);
 nrf24_hal_status_t nrf24_get_status(struct nrf24_t *nrf24, uint8_t *status);
 nrf24_hal_status_t nrf24_set_status(struct nrf24_t *nrf24, uint8_t *status);
