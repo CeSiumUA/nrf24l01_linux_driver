@@ -155,6 +155,22 @@ nrf24_hal_status_t nrf24_set_crc_mode(struct nrf24_t *nrf24, enum nrf24_crc_mode
     return nrf24_write_register(nrf24, NRF24_REG_CONFIG, &config, 1);
 }
 
+nrf24_hal_status_t nrf24_get_crc_mode(struct nrf24_t *nrf24, enum nrf24_crc_mode_t *crc_mode) {
+    nrf24_hal_status_t status;
+    uint8_t config;
+
+    status = nrf24_get_config(nrf24, &config);
+    if(status != HAL_OK){
+        return status;
+    }
+
+    config = (config >> 2) & 0x03;
+
+    *crc_mode = (enum nrf24_crc_mode_t)config;
+
+    return status;
+}
+
 nrf24_hal_status_t nrf24_get_config(struct nrf24_t *nrf24, uint8_t *config) {
     return nrf24_read_register(nrf24, NRF24_REG_CONFIG, config, 1);
 }
@@ -209,8 +225,21 @@ nrf24_hal_status_t nrf24_set_address_width(struct nrf24_t *nrf24, enum nrf24_add
     return nrf24_write_register(nrf24, NRF24_REG_SETUP_AW, &setup_aw, 1);
 }
 
-nrf24_hal_status_t nrf24_get_address_width(struct nrf24_t *nrf24, uint8_t *addr_width) {
-    return nrf24_read_register(nrf24, NRF24_REG_SETUP_AW, addr_width, 1);
+nrf24_hal_status_t nrf24_get_address_width(struct nrf24_t *nrf24, enum nrf24_address_width_t *addr_width) {
+    uint8_t aw;
+    nrf24_hal_status_t status;
+
+    status = nrf24_read_register(nrf24, NRF24_REG_SETUP_AW, &aw, 1);
+    
+    aw &= 0x03;
+
+    if(aw == 0){
+        return HAL_ERROR;
+    }
+
+    *addr_width = (enum nrf24_address_width_t)(aw + 2);
+
+    return status;
 }
 
 nrf24_hal_status_t nrf24_setup_retransmission(struct nrf24_t *nrf24, enum nrf24_auto_retransmit_delay_t delay, enum nrf24_auto_retransmit_count_t count) {

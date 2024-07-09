@@ -14,7 +14,7 @@ EXTRA_CFLAGS += -DDEBUG
 ifneq ($(KERNELRELEASE),)
 # call from kernel build system
 obj-m	:= nrf24.o
-nrf24-y := src/main.o src/nrf24_mod.o src/nrf24_hal.o
+nrf24-y := src/main.o src/nrf24_mod.o src/nrf24_hal.o src/nrf24_sysfs.o
 else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build

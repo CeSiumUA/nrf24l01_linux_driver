@@ -1,4 +1,5 @@
 #include "nrf24_mod.h"
+#include "nrf24_sysfs.h"
 
 const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
 const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
@@ -11,6 +12,9 @@ const u8 nrf24_default_channel = 20;
 
 static struct ida *dev_ida;
 static struct ida *pipe_ida;
+
+ATTRIBUTE_GROUPS(nrf24);
+ATTRIBUTE_GROUPS(nrf24_pipe);
 
 static void nrf24_dev_release(struct device *dev){
     struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
@@ -638,5 +642,5 @@ void nrf24_mod_remove(struct spi_device *spi, struct class *nrf24_class){
 
     nrf24_destroy_devices(nrf24_dev);
 
-    device_unregister(&(nrf24_dev->dev);
+    device_unregister(&(nrf24_dev->dev));
 }
