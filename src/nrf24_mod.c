@@ -497,16 +497,69 @@ err_gpio_put:
     return ret;
 }
 
+static int nrf24_open(struct inode *inode, struct file *filp)
+{
+	struct nrf24_pipe_t *pipe;
+
+	pipe = container_of(inode->i_cdev, struct nrf24_pipe_t, cdev);
+
+	if (!pipe) {
+		pr_err("device: minor %d unknown.\n", iminor(inode));
+		return -ENODEV;
+	}
+
+	filp->private_data = pipe;
+	nonseekable_open(inode, filp);
+
+	return 0;
+}
+
+static int nrf24_release(struct inode *inode, struct file *filp)
+{
+	filp->private_data = NULL;
+
+	return 0;
+}
+
+static ssize_t nrf24_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+{
+    struct nrf24_pipe_t *pipe = filp->private_data;
+    int ret;
+    ssize_t n;
+    unsigned int copied;
+
+    if(kfifo_is_empty(&(pipe->rx_fifo))){
+        if(filp->f_flags & O_NONBLOCK){
+            return -EAGAIN;
+        }
+        else{
+            wait_event_interruptible(pipe->read_wait_queue, !kfifo_is_empty(&(pipe->rx_fifo)));
+        }
+    }
+
+    ret = mutex_lock_interruptible(&(pipe->rx_fifo_lock));
+    if(ret) {
+        return ret;
+    }
+
+    n = kfifo_to_user(&(pipe->rx_fifo), buf, count, &copied);
+
+    mutex_unlock(&(pipe->rx_fifo_lock));
+
+    return n ? n : copied;
+}
+
 static const struct file_operations nrf24_fops = {
     .owner = THIS_MODULE,
     /* TODO to be implemented in:
     1. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/2
     2. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/3,
     */
-    // .read = nrf24_read,
+    .read = nrf24_read,
     // .write = nrf24_write,
-    // .open = nrf24_open,
-    // .release = nrf24_release,
+    .open = nrf24_open,
+    .release = nrf24_release,
+    .llseek = no_llseek
 };
 
 static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, dev_t *devt, int pipe_id){
