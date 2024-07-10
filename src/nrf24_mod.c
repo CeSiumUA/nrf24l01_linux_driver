@@ -565,7 +565,7 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
             goto exit;
         }
 
-        if(mutex_lock_interruptible(&(nrf24_dev->tx_fifo_lock)){
+        if(mutex_lock_interruptible(&(nrf24_dev->tx_fifo_lock))){
             dev_err(&(nrf24_dev->dev), "%s: failed to lock tx fifo mutex\n", __func__);
             goto exit;
         }
@@ -575,7 +575,7 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
             goto exit_unlock_mutex;
         }
 
-        mutex_unlock(&(nrf24_dev->tx_fifo_lock);
+        mutex_unlock(&(nrf24_dev->tx_fifo_lock));
 
         if(filp->f_flags & O_NONBLOCK){
             copied += tx_data.size;
