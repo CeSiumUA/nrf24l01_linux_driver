@@ -549,14 +549,64 @@ static ssize_t nrf24_read(struct file *filp, char __user *buf, size_t count, lof
     return n ? n : copied;
 }
 
+static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
+{
+    struct nrf24_pipe_t *pipe = filp->private_data;
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(pipe->dev->parent);
+    struct nrf24_tx_data_t tx_data;
+    ssize_t copied = 0;
+
+    while(count > 0){
+        tx_data.size = pipe->config.plw != 0 ? pipe->config.plw : min_t(size_t, count, NRF24_MAX_PAYLOAD_SIZE);
+
+        memset(tx_data.payload, 0, (sizeof(tx_data.payload) / sizeof(*tx_data.payload)));
+        if(copy_from_user(tx_data.payload, buf + copied, tx_data.size)){
+            dev_err(&(nrf24_dev->dev), "%s: failed to copy data from user\n", __func__);
+            goto exit;
+        }
+
+        if(mutex_lock_interruptible(&(nrf24_dev->tx_fifo_lock)){
+            dev_err(&(nrf24_dev->dev), "%s: failed to lock tx fifo mutex\n", __func__);
+            goto exit;
+        }
+
+        if(kfifo_in(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data)) != sizeof(tx_data)){
+            dev_err(&(nrf24_dev->dev), "%s: failed to write to tx fifo\n", __func__);
+            goto exit_unlock_mutex;
+        }
+
+        mutex_unlock(&(nrf24_dev->tx_fifo_lock);
+
+        if(filp->f_flags & O_NONBLOCK){
+            copied += tx_data.size;
+        }
+        else{
+            wake_up_interruptible(&(nrf24_dev->tx_wait_queue));
+
+            pipe->write_done = false;
+            if(wait_event_interruptible(pipe->write_wait_queue, pipe->write_done) < 0){
+                dev_err(&(nrf24_dev->dev), "%s: wait event interrupted\n", __func__);
+                goto exit;
+            }
+            copied += pipe->sent;
+        }
+
+        count -= tx_data.size;
+    }
+
+exit_unlock_mutex:
+    mutex_unlock(&(nrf24_dev->tx_fifo_lock));
+exit:
+    if(filp->f_flags & O_NONBLOCK){
+        wake_up_interruptible(&(nrf24_dev->tx_wait_queue));
+    }
+    return copied;
+}
+
 static const struct file_operations nrf24_fops = {
     .owner = THIS_MODULE,
-    /* TODO to be implemented in:
-    1. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/2
-    2. https://github.com/CeSiumUA/nrf24l01_linux_driver/issues/3,
-    */
     .read = nrf24_read,
-    // .write = nrf24_write,
+    .write = nrf24_write,
     .open = nrf24_open,
     .release = nrf24_release,
     .llseek = no_llseek
