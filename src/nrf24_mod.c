@@ -1,5 +1,6 @@
 #include "nrf24_mod.h"
 #include "nrf24_sysfs.h"
+#include "nrf24_ioctl.h"
 
 const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
 const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
@@ -603,13 +604,19 @@ exit:
     return copied;
 }
 
+static long nrf24_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    return nrf24_handle_ioctl(filp, cmd, arg);
+}
+
 static const struct file_operations nrf24_fops = {
     .owner = THIS_MODULE,
     .read = nrf24_read,
     .write = nrf24_write,
     .open = nrf24_open,
     .release = nrf24_release,
-    .llseek = no_llseek
+    .llseek = no_llseek,
+    .unlocked_ioctl = nrf24_ioctl
 };
 
 static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, dev_t *devt, int pipe_id){
