@@ -232,7 +232,7 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
-        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%lu)\n", __func__, pipe->config.addr);
+        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%llu)\n", __func__, pipe->config.addr);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
@@ -548,6 +548,8 @@ static ssize_t nrf24_read(struct file *filp, char __user *buf, size_t count, lof
     ssize_t n;
     unsigned int copied;
 
+    dev_dbg(pipe->dev, "%s: reading %zu bytes\n", __func__, count);
+
     if(kfifo_is_empty(&(pipe->rx_fifo))){
         if(filp->f_flags & O_NONBLOCK){
             return -EAGAIN;
@@ -575,6 +577,10 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
     struct nrf24_device_t *nrf24_dev = to_nrf24_device(pipe->dev->parent);
     struct nrf24_tx_data_t tx_data;
     ssize_t copied = 0;
+
+    tx_data.pipe = pipe;
+
+    dev_dbg(&(nrf24_dev->dev), "%s: writing %zu bytes\n", __func__, count);
 
     while(count > 0){
         tx_data.size = pipe->config.plw != 0 ? pipe->config.plw : min_t(size_t, count, NRF24_MAX_PAYLOAD_SIZE);
