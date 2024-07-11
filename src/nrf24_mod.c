@@ -112,6 +112,8 @@ static void nrf24_rx_work_handler(struct work_struct *work){
             return;
         }
 
+        dev_dbg(&(device->dev), "%s: fifo status: 0x%02x\n", __func__, fifo_status);
+
         if(fifo_status & NRF24_REG_FIFO_STATUS_MASK_RX_EMPTY){
             break;
         }
