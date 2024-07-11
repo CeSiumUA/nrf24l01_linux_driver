@@ -250,7 +250,7 @@ static int nrf24_tx_task(void *data){
 
         dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO\n", __func__);
 
-        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, tx_data.size);
+        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, pipe->config.plw);
         if(hal_status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to write to tx FIFO\n", __func__);
             goto restore_rx_mode;
