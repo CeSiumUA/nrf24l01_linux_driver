@@ -148,6 +148,9 @@ static void nrf24_rx_work_handler(struct work_struct *work){
             dev_err(&(device->dev), "%s: failed to lock rx fifo mutex\n", __func__);
             return;
         }
+
+        dev_dbg(&(device->dev), "%s: received %u bytes\n", __func__, pipe->config.plw);
+
         kfifo_in(&(pipe->rx_fifo), data_buffer, pipe->config.plw);
         mutex_unlock(&(pipe->rx_fifo_lock));
 
