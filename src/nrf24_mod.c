@@ -208,6 +208,8 @@ static int nrf24_tx_task(void *data){
             continue;
         }
 
+        dev_dbg(&(nrf24_dev->dev), "%s: reading from TX FIFO\n", __func__);
+
         ret = kfifo_out(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data));
         if(ret != sizeof(tx_data)){
             dev_err(&(nrf24_dev->dev), "%s: failed to read tx fifo\n", __func__);
@@ -220,11 +222,17 @@ static int nrf24_tx_task(void *data){
 
         nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
 
+        dev_dbg(&(nrf24_dev->dev), "%s: CE set to off\n", __func__);
+
+        dev_dgb(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
+
         hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
         if(hal_status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
             goto restore_rx_mode;
         }
+
+        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address\n", __func__);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
@@ -232,11 +240,15 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
+        dev_dbg(&(nrf24_dev->dev), "%s: setting tx address\n", __func__);
+
         hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
             goto restore_rx_mode;
         }
+
+        dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO\n", __func__);
 
         hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, tx_data.size);
         if(hal_status != HAL_OK){
@@ -247,6 +259,8 @@ static int nrf24_tx_task(void *data){
         nrf24_dev->tx_done = false;
 
         nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+
+        dev_dbg(&(nrf24_dev->dev), "%s: CE set to on, sending data...\n", __func__);
 
         wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
 
