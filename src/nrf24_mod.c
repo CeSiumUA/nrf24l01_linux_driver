@@ -224,7 +224,7 @@ static int nrf24_tx_task(void *data){
 
         dev_dbg(&(nrf24_dev->dev), "%s: CE set to off\n", __func__);
 
-        dev_dgb(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
+        dev_dbg(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
 
         hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
         if(hal_status != HAL_OK){
