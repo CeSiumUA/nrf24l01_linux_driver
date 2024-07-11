@@ -232,7 +232,7 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
-        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address\n", __func__);
+        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%lu)\n", __func__, pipe->config.addr);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
