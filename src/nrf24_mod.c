@@ -478,14 +478,14 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to set radio channel\n", __func__);
         return -EIO;
     }
-    //FIXME
-    // status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
-    // if(status != HAL_OK){
-    //     dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
-    //     return -EIO;
-    // }
+    
+    status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
+    if(status != HAL_OK){
+        dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
+        return -EIO;
+    }
 
-    // nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+    nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
     return status;
 }
