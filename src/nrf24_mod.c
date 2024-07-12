@@ -260,7 +260,7 @@ static int nrf24_tx_task(void *data){
 
         nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
-        dev_dbg(&(nrf24_dev->dev), "%s: CE set to on, sending data...\n", __func__);
+        dev_dbg(&(nrf24_dev->dev), "%s: CE set to on, sending data (%d) bytes...\n", __func__, pipe->config.plw);
 
         wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
 
