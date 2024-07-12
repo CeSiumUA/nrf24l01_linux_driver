@@ -5,11 +5,11 @@
 const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
 const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
 const enum nrf24_address_width_t nrf24_default_address_width = NRF24_AW_5_BYTES;
-const enum nrf24_auto_retransmit_count_t nrf24_default_auto_retransmit_count = NRF24_ARC_15;
-const enum nrf24_auto_retransmit_delay_t nrf24_default_auto_retransmit_delay = NRF24_ARD_4000_US;
+const enum nrf24_auto_retransmit_count_t nrf24_default_auto_retransmit_count = NRF24_ARC_3;
+const enum nrf24_auto_retransmit_delay_t nrf24_default_auto_retransmit_delay = NRF24_ARD_250_US;
 const enum nrf24_mode_t nrf24_default_mode = NRF24_PM_RX;
 const enum nrf24_tx_power_t nrf24_default_tx_power = NRF24_TXP_0_DBM;
-const u8 nrf24_default_channel = 20;
+const u8 nrf24_default_channel = 36;
 
 static struct ida *dev_ida;
 static struct ida *pipe_ida;
