@@ -231,22 +231,22 @@ static int nrf24_tx_task(void *data){
             dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
             goto restore_rx_mode;
         }
+        //FIXME
+        // dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%llu)\n", __func__, pipe->config.addr);
 
-        dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%llu)\n", __func__, pipe->config.addr);
+        // hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
+        // if(hal_status != HAL_OK){
+        //     dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+        //     goto restore_rx_mode;
+        // }
 
-        hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
-        if(hal_status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
-            goto restore_rx_mode;
-        }
+        // dev_dbg(&(nrf24_dev->dev), "%s: setting tx address\n", __func__);
 
-        dev_dbg(&(nrf24_dev->dev), "%s: setting tx address\n", __func__);
-
-        hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
-        if(hal_status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
-            goto restore_rx_mode;
-        }
+        // hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
+        // if(hal_status != HAL_OK){
+        //     dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
+        //     goto restore_rx_mode;
+        // }
 
         dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO\n", __func__);
 
