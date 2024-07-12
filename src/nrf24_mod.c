@@ -451,21 +451,21 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to setup retransmission\n", __func__);
         return -EIO;
     }
-
-    if(nrf24_dev->config.mode == NRF24_PM_TX){
-        status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
-        if(status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
-            return -EIO;
-        }
-    }
-    else{
-        status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
-        if(status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
-            return -EIO;
-        }
-    }
+    //FIXME
+    // if(nrf24_dev->config.mode == NRF24_PM_TX){
+    //     status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+    //     if(status != HAL_OK){
+    //         dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+    //         return -EIO;
+    //     }
+    // }
+    // else{
+    //     status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
+    //     if(status != HAL_OK){
+    //         dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
+    //         return -EIO;
+    //     }
+    // }
 
     status = nrf24_set_radio_output_power(&(nrf24_dev->nrf24_hal_dev), nrf24_dev->config.tx_power);
     if(status != HAL_OK){
@@ -478,14 +478,14 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to set radio channel\n", __func__);
         return -EIO;
     }
+    //FIXME
+    // status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
+    // if(status != HAL_OK){
+    //     dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
+    //     return -EIO;
+    // }
 
-    status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
-    if(status != HAL_OK){
-        dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
-        return -EIO;
-    }
-
-    nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+    // nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
     return status;
 }
