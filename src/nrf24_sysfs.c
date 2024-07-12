@@ -16,7 +16,7 @@ static struct nrf24_pipe_t *nrf24_find_pipe_ptr(struct device *dev){
 }
 
 static ssize_t crc_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_crc_mode_t crc_mode;
 
@@ -34,7 +34,7 @@ static ssize_t crc_show(struct device *dev, struct device_attribute *attr, char 
 }
 
 static ssize_t crc_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_crc_mode_t crc_mode;
 
@@ -99,7 +99,7 @@ static ssize_t ack_store(struct device *dev, struct device_attribute *attr, cons
 }
 
 static ssize_t aw_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_address_width_t addr_width;
 
@@ -112,7 +112,7 @@ static ssize_t aw_show(struct device *dev, struct device_attribute *attr, char *
 }
 
 static ssize_t aw_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_address_width_t addr_width;
 
@@ -133,7 +133,7 @@ static ssize_t aw_store(struct device *dev, struct device_attribute *attr, const
 }
 
 static ssize_t retr_delay_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_auto_retransmit_delay_t delay_config;
     enum nrf24_auto_retransmit_count_t count_config;
@@ -147,7 +147,7 @@ static ssize_t retr_delay_show(struct device *dev, struct device_attribute *attr
 }
 
 static ssize_t retr_delay_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_auto_retransmit_delay_t delay_config;
     enum nrf24_auto_retransmit_count_t count_config;
@@ -177,7 +177,7 @@ static ssize_t retr_delay_store(struct device *dev, struct device_attribute *att
 }
 
 static ssize_t retr_count_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_auto_retransmit_delay_t delay_config;
     enum nrf24_auto_retransmit_count_t count_config;
@@ -191,7 +191,7 @@ static ssize_t retr_count_show(struct device *dev, struct device_attribute *attr
 }
 
 static ssize_t retr_count_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_auto_retransmit_delay_t delay_config;
     enum nrf24_auto_retransmit_count_t count_config;
@@ -214,7 +214,7 @@ static ssize_t retr_count_store(struct device *dev, struct device_attribute *att
 }
 
 static ssize_t power_up_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     uint8_t config;
 
@@ -227,7 +227,7 @@ static ssize_t power_up_show(struct device *dev, struct device_attribute *attr, 
 }
 
 static ssize_t rx_mode_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     uint8_t config;
 
@@ -256,7 +256,7 @@ static ssize_t rx_enabled_show(struct device *dev, struct device_attribute *attr
 }
 
 static ssize_t rf_ch_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 channel;
 
@@ -269,7 +269,7 @@ static ssize_t rf_ch_show(struct device *dev, struct device_attribute *attr, cha
 }
 
 static ssize_t rf_ch_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 channel;
 
@@ -286,7 +286,7 @@ static ssize_t rf_ch_store(struct device *dev, struct device_attribute *attr, co
 }
 
 static ssize_t rf_dr_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_air_data_rate_t data_rate;
 
@@ -299,7 +299,7 @@ static ssize_t rf_dr_show(struct device *dev, struct device_attribute *attr, cha
 }
 
 static ssize_t rf_dr_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_air_data_rate_t data_rate;
 
@@ -322,7 +322,7 @@ static ssize_t rf_dr_store(struct device *dev, struct device_attribute *attr, co
 }
 
 static ssize_t rf_pwr_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_tx_power_t tx_power;
 
@@ -335,7 +335,7 @@ static ssize_t rf_pwr_show(struct device *dev, struct device_attribute *attr, ch
 }
 
 static ssize_t rf_pwr_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     enum nrf24_tx_power_t tx_power;
 
@@ -356,7 +356,7 @@ static ssize_t rf_pwr_store(struct device *dev, struct device_attribute *attr, c
 }
 
 static ssize_t status_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 status_reg;
 
@@ -369,7 +369,7 @@ static ssize_t status_show(struct device *dev, struct device_attribute *attr, ch
 }
 
 static ssize_t plos_cnt_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 status_reg;
 
@@ -382,7 +382,7 @@ static ssize_t plos_cnt_show(struct device *dev, struct device_attribute *attr, 
 }
 
 static ssize_t arc_cnt_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 status_reg;
 
@@ -395,7 +395,7 @@ static ssize_t arc_cnt_show(struct device *dev, struct device_attribute *attr, c
 }
 
 static ssize_t cd_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 status_reg;
 
@@ -444,7 +444,7 @@ static ssize_t rx_addr_store(struct device *dev, struct device_attribute *attr, 
 }
 
 static ssize_t tx_addr_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u64 addr;
 
@@ -457,7 +457,7 @@ static ssize_t tx_addr_show(struct device *dev, struct device_attribute *attr, c
 }
 
 static ssize_t tx_addr_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u64 addr;
 
@@ -510,13 +510,9 @@ static ssize_t rx_pw_store(struct device *dev, struct device_attribute *attr, co
 }
 
 static ssize_t fifo_status_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
-    struct nrf24_pipe_t *pipe = nrf24_find_pipe_ptr(dev);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 fifo_status;
-    if(IS_ERR(pipe)){
-        return PTR_ERR(pipe);
-    }
 
     status = nrf24_get_fifo_status(&(nrf24_dev->nrf24_hal_dev), &fifo_status);
     if(status != HAL_OK){
@@ -527,13 +523,9 @@ static ssize_t fifo_status_show(struct device *dev, struct device_attribute *att
 }
 
 static ssize_t dynpd_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
-    struct nrf24_pipe_t *pipe = nrf24_find_pipe_ptr(dev);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 dynpd;
-    if(IS_ERR(pipe)){
-        return PTR_ERR(pipe);
-    }
 
     status = nrf24_get_dynpd(&(nrf24_dev->nrf24_hal_dev), &dynpd);
     if(status != HAL_OK){
@@ -544,7 +536,7 @@ static ssize_t dynpd_show(struct device *dev, struct device_attribute *attr, cha
 }
 
 static ssize_t en_dpl_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
 
@@ -557,7 +549,7 @@ static ssize_t en_dpl_show(struct device *dev, struct device_attribute *attr, ch
 }
 
 static ssize_t en_dpl_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
     u8 en_dpl_feature;
@@ -587,7 +579,7 @@ static ssize_t en_dpl_store(struct device *dev, struct device_attribute *attr, c
 }
 
 static ssize_t en_ack_pay_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
 
@@ -600,7 +592,7 @@ static ssize_t en_ack_pay_show(struct device *dev, struct device_attribute *attr
 }
 
 static ssize_t en_ack_pay_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
     u8 en_ack_pay_feature;
@@ -630,7 +622,7 @@ static ssize_t en_ack_pay_store(struct device *dev, struct device_attribute *att
 }
 
 static ssize_t en_dyn_ack_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
 
@@ -643,7 +635,7 @@ static ssize_t en_dyn_ack_show(struct device *dev, struct device_attribute *attr
 }
 
 static ssize_t en_dyn_ack_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
     nrf24_hal_status_t status;
     u8 feature;
     u8 en_dyn_ack_feature;
