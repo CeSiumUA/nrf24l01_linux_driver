@@ -485,7 +485,7 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         return -EIO;
     }
 
-    nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+    // nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
     return status;
 }

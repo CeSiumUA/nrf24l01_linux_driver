@@ -223,7 +223,7 @@ static ssize_t power_up_show(struct device *dev, struct device_attribute *attr, 
         return -EIO;
     }
 
-    return scnprintf(buf, PAGE_SIZE, "%d\n", (config & NRF24_PWR_UP));
+    return scnprintf(buf, PAGE_SIZE, "%d\n", ((config >> 1) & NRF24_PWR_UP));
 }
 
 static ssize_t rx_mode_show(struct device *dev, struct device_attribute *attr, char *buf){
