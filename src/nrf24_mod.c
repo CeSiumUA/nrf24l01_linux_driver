@@ -264,7 +264,7 @@ static int nrf24_tx_task(void *data){
 
         usleep_range(10000, 11000);
 
-        dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO\n", __func__);
+        dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO (plw: %u)\n", __func__, pipe->config.plw);
 
         hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, pipe->config.plw);
         if(hal_status != HAL_OK){
