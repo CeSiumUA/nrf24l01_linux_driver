@@ -531,7 +531,7 @@ static ssize_t dynpd_show(struct device *dev, struct device_attribute *attr, cha
     }
     u8 dynpd;
 
-    status = nrf24_get_dynpd(&(nrf24_dev->nrf24_hal_dev), &dynpd);
+    status = nrf24_get_dynpd(&(nrf24_dev->nrf24_hal_dev), pipe->id, &dynpd);
     if(status != HAL_OK){
         return -EIO;
     }
