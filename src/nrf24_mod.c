@@ -191,6 +191,7 @@ static int nrf24_tx_task(void *data){
     struct nrf24_pipe_t *pipe;
     struct nrf24_tx_data_t tx_data;
     nrf24_hal_status_t hal_status;
+    u8 config;
     int ret;
 
     while(true){
@@ -234,16 +235,6 @@ static int nrf24_tx_task(void *data){
 
         usleep_range(10000, 11000);
 
-        dev_dbg(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
-
-        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
-        if(hal_status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
-            goto restore_rx_mode;
-        }
-
-        usleep_range(10000, 11000);
-
         dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%llu)\n", __func__, pipe->config.addr);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
@@ -264,6 +255,16 @@ static int nrf24_tx_task(void *data){
 
         usleep_range(10000, 11000);
 
+        dev_dbg(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
+
+        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        usleep_range(10000, 11000);
+
         dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO (plw: %u)\n", __func__, pipe->config.plw);
 
         hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, pipe->config.plw);
@@ -275,6 +276,22 @@ static int nrf24_tx_task(void *data){
         usleep_range(10000, 11000);
 
         nrf24_dev->tx_done = false;
+
+        hal_status = nrf24_get_fifo_status(&(nrf24_dev->nrf24_hal_dev), &config);
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to get fifo status\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        dev_dbg(&(nrf24_dev->dev), "%s: fifo status: 0x%02x\n", __func__, config);
+
+        hal_status = nrf24_get_status(&(nrf24_dev->nrf24_hal_dev), &config);
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to get status\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        dev_dbg(&(nrf24_dev->dev), "%s: status: 0x%02x\n", __func__, config);
 
         nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
