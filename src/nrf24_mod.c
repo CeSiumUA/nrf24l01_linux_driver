@@ -289,34 +289,34 @@ restore_rx_mode:
             dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
+            //FIXME temporary commented
+            // hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            // if(hal_status != HAL_OK){
+            //     dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
+            //     continue;
+            // }
 
-            hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
-                continue;
-            }
+            // hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            // if(hal_status != HAL_OK){
+            //     dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
+            //     continue;
+            // }
 
-            hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
-                continue;
-            }
-
-            pipe = nrf24_dev->pipes[0];
-            dev_dbg(&(nrf24_dev->dev), "%s: setting pipe (%d) address: (%llu)\n", __func__, pipe->id, pipe->config.addr);
-            hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
-                continue;
-            }
+            // pipe = nrf24_dev->pipes[0];
+            // dev_dbg(&(nrf24_dev->dev), "%s: setting pipe (%d) address: (%llu)\n", __func__, pipe->id, pipe->config.addr);
+            // hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
+            // if(hal_status != HAL_OK){
+            //     dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
+            //     continue;
+            // }
             
-            hal_status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
-                continue;
-            }
+            // hal_status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
+            // if(hal_status != HAL_OK){
+            //     dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
+            //     continue;
+            // }
 
-            nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+            // nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
             dev_dbg(&(nrf24_dev->dev), "%s: CE set to on, reverted to PRX\n", __func__);
         }
