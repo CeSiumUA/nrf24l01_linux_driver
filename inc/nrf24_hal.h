@@ -282,7 +282,7 @@ nrf24_hal_status_t nrf24_get_tx_address(struct nrf24_t *nrf24, uint8_t *address)
 nrf24_hal_status_t nrf24_set_rx_payload_width(struct nrf24_t *nrf24, uint8_t pipe, uint8_t width);
 nrf24_hal_status_t nrf24_get_rx_payload_width(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *width);
 nrf24_hal_status_t nrf24_get_fifo_status(struct nrf24_t *nrf24, uint8_t *fifo_status);
-nrf24_hal_status_t nrf24_get_dynpd(struct nrf24_t *nrf24, uint8_t *dynpd);
+nrf24_hal_status_t nrf24_get_dynpd(struct nrf24_t *nrf24, uint8_t pipe_id, uint8_t *dynpd);
 nrf24_hal_status_t nrf24_set_dynpd(struct nrf24_t *nrf24, uint8_t pipe, bool enable);
 nrf24_hal_status_t nrf24_get_feature(struct nrf24_t *nrf24, uint8_t *feature);
 nrf24_hal_status_t nrf24_set_feature(struct nrf24_t *nrf24, uint8_t feature);

@@ -523,8 +523,12 @@ static ssize_t fifo_status_show(struct device *dev, struct device_attribute *att
 }
 
 static ssize_t dynpd_show(struct device *dev, struct device_attribute *attr, char *buf){
-    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev);
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
+    struct nrf24_pipe_t *pipe = nrf24_find_pipe_ptr(dev);
     nrf24_hal_status_t status;
+    if(IS_ERR(pipe)){
+        return PTR_ERR(pipe);
+    }
     u8 dynpd;
 
     status = nrf24_get_dynpd(&(nrf24_dev->nrf24_hal_dev), &dynpd);

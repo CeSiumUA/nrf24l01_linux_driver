@@ -432,8 +432,18 @@ nrf24_hal_status_t nrf24_get_fifo_status(struct nrf24_t *nrf24, uint8_t *fifo_st
     return nrf24_read_register(nrf24, NRF24_REG_FIFO_STATUS, fifo_status, 1);
 }
 
-nrf24_hal_status_t nrf24_get_dynpd(struct nrf24_t *nrf24, uint8_t *dynpd) {
-    return nrf24_read_register(nrf24, NRF24_REG_DYNPD, dynpd, 1);
+nrf24_hal_status_t nrf24_get_dynpd(struct nrf24_t *nrf24, uint8_t pipe_id, uint8_t *dynpd) {
+    uint8_t config;
+    nrf24_hal_status_t status;
+
+    status = nrf24_read_register(nrf24, NRF24_REG_DYNPD, &config, 1);
+    if(status != HAL_OK){
+        return status;
+    }
+
+    *dynpd = (config >> pipe_id) & 0x01;
+
+    return status;
 }
 
 nrf24_hal_status_t nrf24_set_dynpd(struct nrf24_t *nrf24, uint8_t pipe, bool enable) {
