@@ -605,7 +605,7 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
 
     tx_data.pipe = pipe;
 
-    dev_dbg(&(nrf24_dev->dev), "%s: writing %zu bytes\n", __func__, count);
+    dev_dbg(&(nrf24_dev->dev), "%s: writing overall %zu bytes\n", __func__, count);
 
     while(count > 0){
         tx_data.size = pipe->config.plw != 0 ? pipe->config.plw : min_t(size_t, count, NRF24_MAX_PAYLOAD_SIZE);
@@ -639,10 +639,16 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
                 dev_err(&(nrf24_dev->dev), "%s: wait event interrupted\n", __func__);
                 goto exit;
             }
-            copied += pipe->sent;
         }
 
-        count -= tx_data.size;
+        if(tx_data.size > count){
+            copied += count;
+            count = 0;
+        }
+        else{
+            count -= tx_data.size;
+            copied += pipe->sent;
+        }
     }
 
 exit_unlock_mutex:
