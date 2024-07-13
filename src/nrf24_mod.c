@@ -5,11 +5,11 @@
 const enum nrf24_crc_mode_t nrf24_default_crc_mode = NRF24_CRC_1_BYTE;
 const enum nrf24_air_data_rate_t nrf24_default_air_data_rate = NRF24_ADR_1_MBPS;
 const enum nrf24_address_width_t nrf24_default_address_width = NRF24_AW_5_BYTES;
-const enum nrf24_auto_retransmit_count_t nrf24_default_auto_retransmit_count = NRF24_ARC_15;
-const enum nrf24_auto_retransmit_delay_t nrf24_default_auto_retransmit_delay = NRF24_ARD_4000_US;
+const enum nrf24_auto_retransmit_count_t nrf24_default_auto_retransmit_count = NRF24_ARC_3;
+const enum nrf24_auto_retransmit_delay_t nrf24_default_auto_retransmit_delay = NRF24_ARD_250_US;
 const enum nrf24_mode_t nrf24_default_mode = NRF24_PM_RX;
 const enum nrf24_tx_power_t nrf24_default_tx_power = NRF24_TXP_0_DBM;
-const u8 nrf24_default_channel = 20;
+const u8 nrf24_default_channel = 36;
 
 static struct ida *dev_ida;
 static struct ida *pipe_ida;
@@ -53,7 +53,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         usecs += (usecs / 2);
         mod_timer(&(device->rx_active_timer), jiffies + usecs_to_jiffies(usecs));
         nrf24_clear_status = NRF24_REG_STATUS_MASK_RX_DR;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -67,7 +67,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         device->tx_done = true;
         device->tx_failed = false;
         nrf24_clear_status = NRF24_REG_STATUS_MASK_TX_DS;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -85,7 +85,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
             return;
         }
         nrf24_clear_status = NRF24_REG_STATUS_MASK_MAX_RT;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -203,6 +203,8 @@ static int nrf24_tx_task(void *data){
             continue;
         }
 
+        dev_dbg(&(nrf24_dev->dev), "%s: reading from TX FIFO\n", __func__);
+
         ret = kfifo_out(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data));
         if(ret != sizeof(tx_data)){
             dev_err(&(nrf24_dev->dev), "%s: failed to read tx fifo\n", __func__);
@@ -215,11 +217,17 @@ static int nrf24_tx_task(void *data){
 
         nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
 
-        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        usleep_range(10000, 11000);
+
+        dev_dbg(&(nrf24_dev->dev), "%s: CE set to off\n", __func__);
+
+        hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
         if(hal_status != HAL_OK){
-            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
-            goto restore_rx_mode;
+            dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
+            continue;
         }
+
+        usleep_range(10000, 11000);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
@@ -227,21 +235,43 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
+        usleep_range(10000, 11000);
+
+        dev_dbg(&(nrf24_dev->dev), "%s: setting tx address\n", __func__);
+
         hal_status = nrf24_set_tx_address(&(nrf24_dev->nrf24_hal_dev), (u8 *)&(pipe->config.addr));
         if(hal_status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to set tx address\n", __func__);
             goto restore_rx_mode;
         }
 
-        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, tx_data.size);
+        usleep_range(10000, 11000);
+
+        dev_dbg(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
+
+        hal_status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
+        if(hal_status != HAL_OK){
+            dev_err(&(nrf24_dev->dev), "%s: failed to set ptx mode\n", __func__);
+            goto restore_rx_mode;
+        }
+
+        usleep_range(10000, 11000);
+
+        dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO (plw: %u)\n", __func__, pipe->config.plw);
+
+        hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, pipe->config.plw);
         if(hal_status != HAL_OK){
             dev_err(&(nrf24_dev->dev), "%s: failed to write to tx FIFO\n", __func__);
             goto restore_rx_mode;
         }
 
+        usleep_range(10000, 11000);
+
         nrf24_dev->tx_done = false;
 
         nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+
+        dev_dbg(&(nrf24_dev->dev), "%s: CE set to on, sending data (%d) bytes...\n", __func__, pipe->config.plw);
 
         wait_event_interruptible(nrf24_dev->tx_done_wait_queue, (nrf24_dev->tx_done || kthread_should_stop()));
 
@@ -261,6 +291,8 @@ static int nrf24_tx_task(void *data){
 
 restore_rx_mode:
         if(kfifo_is_empty(&(nrf24_dev->tx_fifo)) || nrf24_dev->rx_active){
+            usleep_range(10000, 11000);
+
             dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
@@ -271,12 +303,22 @@ restore_rx_mode:
                 dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
                 continue;
             }
-
+            
             hal_status = nrf24_set_prx_mode(&(nrf24_dev->nrf24_hal_dev));
             if(hal_status != HAL_OK){
                 dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
                 continue;
             }
+
+            usleep_range(10000, 11000);
+
+            hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
+                continue;
+            }
+
+            usleep_range(10000, 11000);
 
             nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
         }
@@ -432,7 +474,7 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to setup retransmission\n", __func__);
         return -EIO;
     }
-
+    
     if(nrf24_dev->config.mode == NRF24_PM_TX){
         status = nrf24_set_ptx_mode(&(nrf24_dev->nrf24_hal_dev));
         if(status != HAL_OK){
@@ -459,13 +501,15 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to set radio channel\n", __func__);
         return -EIO;
     }
-
+    
     status = nrf24_power_up(&(nrf24_dev->nrf24_hal_dev));
     if(status != HAL_OK){
         dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
         return -EIO;
     }
 
+    usleep_range(10000, 11000);
+    
     nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
     return status;
@@ -529,6 +573,8 @@ static ssize_t nrf24_read(struct file *filp, char __user *buf, size_t count, lof
     ssize_t n;
     unsigned int copied;
 
+    dev_dbg(pipe->dev, "%s: reading %zu bytes\n", __func__, count);
+
     if(kfifo_is_empty(&(pipe->rx_fifo))){
         if(filp->f_flags & O_NONBLOCK){
             return -EAGAIN;
@@ -556,6 +602,10 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
     struct nrf24_device_t *nrf24_dev = to_nrf24_device(pipe->dev->parent);
     struct nrf24_tx_data_t tx_data;
     ssize_t copied = 0;
+
+    tx_data.pipe = pipe;
+
+    dev_dbg(&(nrf24_dev->dev), "%s: writing %zu bytes\n", __func__, count);
 
     while(count > 0){
         tx_data.size = pipe->config.plw != 0 ? pipe->config.plw : min_t(size_t, count, NRF24_MAX_PAYLOAD_SIZE);
