@@ -20,6 +20,7 @@
 #include <linux/poll.h>
 #include <linux/list.h>
 #include <linux/timer.h>
+#include <linux/delay.h>
 #include "nrf24_hal.h"
 
 #define FIFO_SIZE			                            65536

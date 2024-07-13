@@ -222,6 +222,8 @@ static int nrf24_tx_task(void *data){
 
         nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
 
+        usleep_range(10000, 11000);
+
         dev_dbg(&(nrf24_dev->dev), "%s: CE set to off\n", __func__);
 
         hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
@@ -229,6 +231,8 @@ static int nrf24_tx_task(void *data){
             dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
             continue;
         }
+
+        usleep_range(10000, 11000);
 
         dev_dbg(&(nrf24_dev->dev), "%s: setting PTX mode\n", __func__);
 
@@ -238,6 +242,8 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
+        usleep_range(10000, 11000);
+
         dev_dbg(&(nrf24_dev->dev), "%s: setting major pipe address (%llu)\n", __func__, pipe->config.addr);
 
         hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), 0, (u8 *)&(pipe->config.addr));
@@ -245,6 +251,8 @@ static int nrf24_tx_task(void *data){
             dev_err(&(nrf24_dev->dev), "%s: failed to set major pipe address\n", __func__);
             goto restore_rx_mode;
         }
+
+        usleep_range(10000, 11000);
 
         dev_dbg(&(nrf24_dev->dev), "%s: setting tx address\n", __func__);
 
@@ -254,6 +262,8 @@ static int nrf24_tx_task(void *data){
             goto restore_rx_mode;
         }
 
+        usleep_range(10000, 11000);
+
         dev_dbg(&(nrf24_dev->dev), "%s: writing to tx FIFO\n", __func__);
 
         hal_status = nrf24_write_tx_fifo(&(nrf24_dev->nrf24_hal_dev), tx_data.payload, pipe->config.plw);
@@ -261,6 +271,8 @@ static int nrf24_tx_task(void *data){
             dev_err(&(nrf24_dev->dev), "%s: failed to write to tx FIFO\n", __func__);
             goto restore_rx_mode;
         }
+
+        usleep_range(10000, 11000);
 
         nrf24_dev->tx_done = false;
 
@@ -286,10 +298,12 @@ static int nrf24_tx_task(void *data){
 
 restore_rx_mode:
         if(kfifo_is_empty(&(nrf24_dev->tx_fifo)) || nrf24_dev->rx_active){
+            usleep_range(10000, 11000);
+
             dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
-            //FIXME temporary commented
+
             hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
             if(hal_status != HAL_OK){
                 dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
@@ -315,6 +329,8 @@ restore_rx_mode:
                 dev_err(&(nrf24_dev->dev), "%s: failed to set prx mode\n", __func__);
                 continue;
             }
+
+            usleep_range(10000, 11000);
 
             nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
