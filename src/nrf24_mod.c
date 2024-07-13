@@ -290,17 +290,17 @@ restore_rx_mode:
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
             //FIXME temporary commented
-            // hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            // if(hal_status != HAL_OK){
-            //     dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
-            //     continue;
-            // }
+            hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
+                continue;
+            }
 
-            // hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            // if(hal_status != HAL_OK){
-            //     dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
-            //     continue;
-            // }
+            hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
+                continue;
+            }
 
             // pipe = nrf24_dev->pipes[0];
             // dev_dbg(&(nrf24_dev->dev), "%s: setting pipe (%d) address: (%llu)\n", __func__, pipe->id, pipe->config.addr);
