@@ -344,6 +344,21 @@ nrf24_hal_status_t nrf24_set_status(struct nrf24_t *nrf24, uint8_t *status) {
     return nrf24_write_register(nrf24, NRF24_REG_STATUS, status, 1);
 }
 
+nrf24_hal_status_t nrf24_clear_status_bit(struct nrf24_t *nrf24, uint8_t mask) {
+    uint8_t status;
+    nrf24_hal_status_t hal_status;
+
+    hal_status = nrf24_read_register(nrf24, NRF24_REG_STATUS, &status, 1);
+    if (hal_status != HAL_OK) {
+        return hal_status;
+    }
+
+    status |= mask;
+
+    hal_status = nrf24_write_register(nrf24, NRF24_REG_STATUS, &status, 1);
+    return hal_status;
+}
+
 nrf24_hal_status_t nrf24_get_observe_tx(struct nrf24_t *nrf24, uint8_t *observe_tx) {
     return nrf24_read_register(nrf24, NRF24_REG_OBSERVE_TX, observe_tx, 1);
 }

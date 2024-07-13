@@ -53,7 +53,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         usecs += (usecs / 2);
         mod_timer(&(device->rx_active_timer), jiffies + usecs_to_jiffies(usecs));
         nrf24_clear_status = NRF24_REG_STATUS_MASK_RX_DR;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -67,7 +67,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
         device->tx_done = true;
         device->tx_failed = false;
         nrf24_clear_status = NRF24_REG_STATUS_MASK_TX_DS;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -85,7 +85,7 @@ static void nrf24_isr_work_handler(struct work_struct *work){
             return;
         }
         nrf24_clear_status = NRF24_REG_STATUS_MASK_MAX_RT;
-        status = nrf24_set_status(&(device->nrf24_hal_dev), &nrf24_clear_status);
+        status = nrf24_clear_status_bit(&(device->nrf24_hal_dev), nrf24_clear_status);
         if(status != HAL_OK){
             dev_err(&(device->dev), "%s: failed to set status\n", __func__);
             return;
@@ -320,12 +320,6 @@ restore_rx_mode:
             dev_dbg(&(nrf24_dev->dev), "%s: entering RX mode\n", __func__);
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
-
-            hal_status = nrf24_flush_tx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to flush tx fifo\n", __func__);
-                continue;
-            }
 
             hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
             if(hal_status != HAL_OK){

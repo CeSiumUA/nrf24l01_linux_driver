@@ -269,6 +269,7 @@ nrf24_hal_status_t nrf24_get_radio_data_rate(struct nrf24_t *nrf24, enum nrf24_a
 nrf24_hal_status_t nrf24_get_rf_setup(struct nrf24_t *nrf24, uint8_t *rf_setup);
 nrf24_hal_status_t nrf24_get_status(struct nrf24_t *nrf24, uint8_t *status);
 nrf24_hal_status_t nrf24_set_status(struct nrf24_t *nrf24, uint8_t *status);
+nrf24_hal_status_t nrf24_clear_status_bit(struct nrf24_t *nrf24, uint8_t mask);
 nrf24_hal_status_t nrf24_get_observe_tx(struct nrf24_t *nrf24, uint8_t *observe_tx);
 nrf24_hal_status_t nrf24_get_carrier_detect(struct nrf24_t *nrf24, uint8_t *cd);
 nrf24_hal_status_t nrf24_set_major_pipe_address(struct nrf24_t *nrf24, uint8_t pipe, uint8_t *address);
