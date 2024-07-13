@@ -643,14 +643,15 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
                 dev_err(&(nrf24_dev->dev), "%s: wait event interrupted\n", __func__);
                 goto exit;
             }
-            copied += pipe->sent;
         }
 
         if(tx_data.size > count){
+            copied += count;
             count = 0;
         }
         else{
             count -= tx_data.size;
+            copied += pipe->sent;
         }
     }
 
@@ -660,6 +661,9 @@ exit:
     if(filp->f_flags & O_NONBLOCK){
         wake_up_interruptible(&(nrf24_dev->tx_wait_queue));
     }
+
+    dev_dbg(&(nrf24_dev->dev), "%s: written %zu bytes\n", __func__, copied);
+
     return copied;
 }
 
