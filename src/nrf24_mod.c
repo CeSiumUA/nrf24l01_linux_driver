@@ -321,12 +321,6 @@ restore_rx_mode:
 
             nrf24_ce_off(&(nrf24_dev->nrf24_hal_dev));
 
-            hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
-            if(hal_status != HAL_OK){
-                dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
-                continue;
-            }
-
             pipe = nrf24_dev->pipes[0];
             dev_dbg(&(nrf24_dev->dev), "%s: setting pipe (%d) address: (%llu)\n", __func__, pipe->id, pipe->config.addr);
             hal_status = nrf24_set_major_pipe_address(&(nrf24_dev->nrf24_hal_dev), pipe->id, (u8 *)&(pipe->config.addr));
@@ -341,6 +335,14 @@ restore_rx_mode:
                 continue;
             }
 
+            usleep_range(10000, 11000);
+
+            hal_status = nrf24_flush_rx_fifo(&(nrf24_dev->nrf24_hal_dev));
+            if(hal_status != HAL_OK){
+                dev_err(&(nrf24_dev->dev), "%s: failed to flush rx fifo\n", __func__);
+                continue;
+            }
+            
             usleep_range(10000, 11000);
 
             nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
