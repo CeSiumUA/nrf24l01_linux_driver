@@ -621,6 +621,8 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
             goto exit;
         }
 
+        dev_dbg("&(nrf24_dev->dev)", "%s: writing to tx fifo\n", __func__);
+
         if(kfifo_in(&(nrf24_dev->tx_fifo), &tx_data, sizeof(tx_data)) != sizeof(tx_data)){
             dev_err(&(nrf24_dev->dev), "%s: failed to write to tx fifo\n", __func__);
             goto exit_unlock_mutex;
