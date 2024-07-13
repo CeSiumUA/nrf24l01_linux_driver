@@ -538,8 +538,8 @@ static int nrf24_hal_rx_mode_init(struct nrf24_device_t *nrf24_dev){
         dev_err(&(nrf24_dev->dev), "%s: failed to power up\n", __func__);
         return -EIO;
     }
-    //FIXME
-    // nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
+    
+    nrf24_ce_on(&(nrf24_dev->nrf24_hal_dev));
 
     return status;
 }
