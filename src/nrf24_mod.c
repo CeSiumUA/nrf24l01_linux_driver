@@ -605,10 +605,12 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
 
     tx_data.pipe = pipe;
 
-    dev_dbg(&(nrf24_dev->dev), "%s: writing %zu bytes\n", __func__, count);
+    dev_dbg(&(nrf24_dev->dev), "%s: writing overall %zu bytes\n", __func__, count);
 
     while(count > 0){
         tx_data.size = pipe->config.plw != 0 ? pipe->config.plw : min_t(size_t, count, NRF24_MAX_PAYLOAD_SIZE);
+
+        dev_dbg(&(nrf24_dev->dev), "%s: writing %zu bytes\n", __func__, count);
 
         memset(tx_data.payload, 0, (sizeof(tx_data.payload) / sizeof(*tx_data.payload)));
         if(copy_from_user(tx_data.payload, buf + copied, tx_data.size)){
