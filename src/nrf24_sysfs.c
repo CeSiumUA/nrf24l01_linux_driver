@@ -3,12 +3,12 @@
 #include "nrf24_mod.h"
 
 static struct nrf24_pipe_t *nrf24_find_pipe_ptr(struct device *dev){
-	struct nrf24_pipe_t *pipe;
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(dev->parent);
     int i;
 
 	for(i = 0; i < NRF24_PIPES_COUNT; i++){
-		if (pipe->dev == dev){
-			return pipe;
+		if(nrf24_dev->pipes[i]->dev == dev){
+            return nrf24_dev->pipes[i];
         }
     }
 
