@@ -646,7 +646,12 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
             copied += pipe->sent;
         }
 
-        count -= tx_data.size;
+        if(tx_data.size > count){
+            count = 0;
+        }
+        else{
+            count -= tx_data.size;
+        }
     }
 
 exit_unlock_mutex:
