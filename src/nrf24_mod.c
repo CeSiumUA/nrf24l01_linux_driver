@@ -665,6 +665,22 @@ static long nrf24_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     return nrf24_handle_ioctl(filp, cmd, arg);
 }
 
+static unsigned int nrf24_poll(struct file *filp, struct poll_table_struct *wait)
+{
+    struct nrf24_pipe_t *pipe = filp->private_data;
+    struct nrf24_device_t *nrf24_dev = to_nrf24_device(pipe->dev->parent);
+    unsigned int mask = 0;
+
+    poll_wait(filp, &(pipe->read_wait_queue), wait);
+	if (!kfifo_is_empty(&(pipe->rx_fifo)))
+		mask |= (EPOLLIN | EPOLLRDNORM);
+
+	if (!kfifo_is_full(&(nrf24_dev->tx_fifo)))
+		mask |= (EPOLLOUT | EPOLLWRNORM);
+
+    return mask;
+}
+
 static const struct file_operations nrf24_fops = {
     .owner = THIS_MODULE,
     .read = nrf24_read,
@@ -672,7 +688,8 @@ static const struct file_operations nrf24_fops = {
     .open = nrf24_open,
     .release = nrf24_release,
     .llseek = no_llseek,
-    .unlocked_ioctl = nrf24_ioctl
+    .unlocked_ioctl = nrf24_ioctl,
+    .poll = nrf24_poll
 };
 
 static struct nrf24_pipe_t *nrf24_create_pipe(struct nrf24_device_t *nrf24_dev, dev_t *devt, int pipe_id){
