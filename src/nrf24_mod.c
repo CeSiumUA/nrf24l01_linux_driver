@@ -639,15 +639,20 @@ static ssize_t nrf24_write(struct file *filp, const char __user *buf, size_t cou
                 dev_err(&(nrf24_dev->dev), "%s: wait event interrupted\n", __func__);
                 goto exit;
             }
+
+            if(tx_data.size > count){
+                copied += count;
+            }
+            else{
+                copied += pipe->sent;
+            }
         }
 
         if(tx_data.size > count){
-            copied += count;
             count = 0;
         }
         else{
             count -= tx_data.size;
-            copied += pipe->sent;
         }
     }
 
