@@ -573,8 +573,6 @@ static ssize_t nrf24_read(struct file *filp, char __user *buf, size_t count, lof
     ssize_t n;
     unsigned int copied;
 
-    dev_dbg(pipe->dev, "%s: reading %zu bytes\n", __func__, count);
-
     if(kfifo_is_empty(&(pipe->rx_fifo))){
         if(filp->f_flags & O_NONBLOCK){
             return -EAGAIN;
